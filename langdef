@@ -1,0 +1,13 @@
+
+expr		: WORD EQ arith-expr
+
+arith-expr	: term ((PLUS|MINUS) term)*
+
+term		: factor ((DIV|MUL) factor)*
+
+factor		: (PLUS|MINUS) factor
+		: atom
+
+atom		: NUMBER | INT
+		: WORD
+		: LBRACK expr RBRACK
