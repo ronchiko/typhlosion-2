@@ -3,18 +3,29 @@
 #include <string>
 #include <iostream>
 
+#include "environment.h"
+#include "parser.h"
+
 class TyphlosionShell {
 private:
 	std::string buffer;
+	typh_env env;
 public:
-	TyphlosionShell() : buffer() {}
+	TyphlosionShell(typh_env env) : buffer(), env(env) {}
 	
 	void start() {
+		Lexer l;
 		while(true) {
 			std::cout << "> ";
 			std::getline(std::cin, buffer);
-			std::cout << buffer << std::endl;
-		}	
+			
+			TokenReader& r = l.getTokens(buffer);
+			std::cout << r << std::endl;
+
+			if(r.current()->is(TT_Word, "quit")) break;
+
+			delete &r;
+		}
 	}
 };
 

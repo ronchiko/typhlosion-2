@@ -8,6 +8,7 @@
 
 typh_float TyphlosionEnv::float_type = nullptr;
 typh_error TyphlosionEnv::error_type = nullptr;
+typh_bool TyphlosionEnv::bool_type = nullptr;
 
 typedef TyphlosionError TyphErr;
 
@@ -24,6 +25,16 @@ typh_instance call_function(std::string f, typh_instance a, typh_instance b, typ
 		case str2int("sub"): return CALL_OP1(sub);
 		case str2int("log"): a->type()->log(std::cout, a);
 				     return nullptr;
+		case str2int("mul"): return CALL_OP1(mul);
+		case str2int("div"): return CALL_OP1(div);
+		case str2int("inv"): return CALL_OP0(inv);
+
+		case str2int("and"): case str2int("an_"): return CALL_OP1(an_);
+		case str2int("xor"): case str2int("xr_"): return CALL_OP1(xr_);
+		case str2int("not"): case str2int("nt_"): return CALL_OP0(nt_);
+		case str2int("or"):  case str2int("or_"): return CALL_OP1(or_);
+		case str2int("lsh"): return CALL_OP1(lsh);
+		case str2int("rsh"): return CALL_OP1(rsh);
 		default: return nullptr;
 	}
 }
@@ -40,6 +51,18 @@ typh_instance TyphlosionEnv::call(std::string f, typh_instance a){
 
 bool TyphlosionEnv::call(typh_comp_1a f, typh_instance a, typh_instance b){
 	return (a->type()->*f)(this, a, b);
+}
+
+typh_instance TyphlosionEnv::addi(std::string name, typh_instance instance) {
+	if(instancemap.find(name) != instancemap.end()) return nullptr;
+	instancemap[name] = instance;
+	return instance;
+}
+
+bool TyphlosionEnv::addt(std::string name, typh_type t){
+	if(typemap.find(name) == typemap.end()) return false;
+	typemap[name] = t;
+	return true;
 }
 
 /* Gets the upmost parent of a env recusively */
@@ -82,11 +105,27 @@ typh_instance TyphlosionEnv::make_err(const char* fmt...){
 					case 's':{
 						const char* str = va_arg(args, const char*);
 						ss << std::string(str);
-						 }break;
+					}break;
 					case 'i':{
 						int inum = va_arg(args, int);
 						ss << inum;
-						 }break;
+					}break;
+					case 'f':{
+						float fnum = static_cast<float>(va_arg(args, double));
+						ss << fnum;
+					}break;
+					case 't':{	// type name
+						typh_type type = va_arg(args, typh_type);
+						ss << namet(type);
+					}break;
+					case 'n':{
+						typh_instance instance = va_arg(args, typh_instance);
+						ss << namei(instance);
+					}break;
+					case 'v':{
+						typh_instance instance = va_arg(args, typh_instance);
+						instance->type()->log(ss, instance);
+					}break;
 					case '%': ss << '%'; break;
 				}
 				break;
@@ -99,7 +138,7 @@ typh_instance TyphlosionEnv::make_err(const char* fmt...){
 }
 
 std::string TyphlosionEnv::namet(typh_type t) {
-
+	
 	if(t == float_type) return "float";
 	if(t == error_type) return "error";
 

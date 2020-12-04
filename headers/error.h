@@ -20,8 +20,23 @@ public:
 	
 	TyphFunc_1A(add) override;
 	TyphFunc_1A(sub) override;
-	
-	TyphComp_1A(eql) override;
+	TyphFunc_1A(mul) override;
+	TyphFunc_1A(div) override;
+	TyphFunc_1A(mod) override;
+	TyphFunc_0A(inv) override;	
+
+	TyphFunc_1A(an_) override;
+	TyphFunc_1A(xr_) override;
+	TyphFunc_1A(or_) override;
+	TyphFunc_1A(lsh) override;
+	TyphFunc_1A(rsh) override;
+	TyphFunc_0A(nt_) override;
+
+	TyphFunc_0A(inc) override;
+	TyphFunc_0A(dec) override;
+	TyphFunc_1A(get) override;
+
+	TyphFunc_1A(eql) override;
 };
 
 typedef TyphlosionError* typh_error;

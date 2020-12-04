@@ -12,7 +12,25 @@ err::err() {
 
 TyphFunc_1A(err::add) thrwerr("Cannot add error types")
 TyphFunc_1A(err::sub) thrwerr("Cannot sub error types")
-TyphComp_1A(err::eql) thrwerr("Unimplemented")
+TyphFunc_1A(err::mul) thrwerr("Illegal operation") 
+TyphFunc_1A(err::div) thrwerr("Illegal operation")
+TyphFunc_0A(err::inv) thrwerr("Illegal operation")
+TyphFunc_1A(err::mod) thrwerr("Illegal operation")
+
+TyphFunc_1A(err::an_) thrwerr("Illegal operation")
+TyphFunc_1A(err::xr_) thrwerr("Illegal operation")
+TyphFunc_1A(err::or_) thrwerr("Illegal operation")
+TyphFunc_1A(err::lsh) thrwerr("Illegal operation")
+TyphFunc_1A(err::rsh) thrwerr("Illegal operation") 
+TyphFunc_0A(err::nt_) thrwerr("Illegal operation")
+
+TyphFunc_1A(err::get) thrwerr("Illegal operation")
+TyphFunc_0A(err::inc) thrwerr("Illegal operation")
+TyphFunc_0A(err::dec) thrwerr("Illegal operation")
+
+TyphFunc_1A(err::eql) {
+	return env->make_bool(b == a);
+}
 
 void err::log(std::ostream& stream, typh_instance inst) const {
 	stream << "\033[1;31m";

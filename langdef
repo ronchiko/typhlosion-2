@@ -1,6 +1,12 @@
+cmplx-expr	: expr (COMMA set-expr) SEMI_COLON
 
-expr		: WORD EQ arith-expr
+set-expr	: (WORD EQ)? logic-expr
 
+logic-expr	: comp-expr ((AND|OR) comp-expr)*
+		: NOT logic-expr
+
+comp-expr	: arith-expr (EQL|GRT|LSS|GRE|LSE|NEQ) arith-expr
+		
 arith-expr	: term ((PLUS|MINUS) term)*
 
 term		: factor ((DIV|MUL) factor)*

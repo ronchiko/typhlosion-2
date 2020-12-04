@@ -5,6 +5,10 @@
 
 #define FLOAT(v) static_cast<typh_float>(v)
 #define GETF(v) *reinterpret_cast<float*>(v->data())
+#define flt TyphlosionFloat
+#define mkerr(msg) env->make_err(msg, env->namet(a->type()).c_str(), env->namet(b->type()).c_str())
+
+#define isflt env->float_type == b->type()
 
 unsigned int TyphlosionType::typeIdCounter = 0;
 
@@ -13,23 +17,78 @@ TyphlosionFloat::TyphlosionFloat() {
 }
 
 TyphFunc_1A(TyphlosionFloat::add) {
-	if(env->findt("float") == b->type()) return env->make_float(GETF(a) + GETF(b));
-	return env->make_err("No adding operation found.");
+	if(isflt) return env->make_float(GETF(a) + GETF(b));
+	return mkerr("Cannot add '%s' and '%s'");
 }
-
 TyphFunc_1A(TyphlosionFloat::sub) {
-	if(env->findt("float") == b->type()) return env->make_float(GETF(a) - GETF(b));
-	return env->make_err("No subtraction operation found.");
+	if(isflt) return env->make_float(GETF(a) - GETF(b));
+	return mkerr("Cannot subtracat '%s' and '%s'");
+}
+TyphFunc_1A(flt::mul){
+	if(isflt) return env->make_float(GETF(a) * GETF(b));
+	return env->make_err("Cannot multiply '%s' and '%s'", env->namet(a->type()), env->namet(b->type()));
+}
+TyphFunc_1A(flt::div){
+	if(isflt) return env->make_float(GETF(a) / GETF(b));
+	return mkerr("Cannot divide '%s' with '%s'");
+}
+TyphFunc_1A(flt::mod) {
+	if(isflt) return env->make_float(GETF(a) / GETF(b));
+	return mkerr("Cannot mod '%s' with '%s'");
+}
+TyphFunc_0A(flt::inv) {
+	return env->make_float(-GETF(a));
 }
 
-TyphComp_1A(TyphlosionFloat::eql) {
-	if(env->findt("float") == b->type()) return GETF(a) == GETF(b);
-	return a == b;
+
+TyphFunc_1A(flt::an_) {
+	//if(isflt) return env->make_float(GETF(a) & GETF(b));
+	return mkerr("Cannot and '%s' and '%s'");
+}
+TyphFunc_1A(flt::xr_) {
+	//if(isflt) return env->make_float(GETF(a) ^ GETF(b));
+	return mkerr("Cannot xor '%s' and '%s'");
+}
+TyphFunc_1A(flt::or_) {
+	//if(isflt) return env->make_float(GETF(a) | GETF(b));
+	return mkerr("Cannot or '%s' and '%s'");
+}
+TyphFunc_0A(flt::nt_) {
+	//return env->make_float(~GETF(a));
+	return env->make_err("Cannot not a 'float' type");
+}
+TyphFunc_1A(flt::lsh) {
+	//if(isflt) return env->make_float(GETF(a) << GETF(b));
+	return mkerr("Cannot left shift '%s' and '%s'");
+}
+TyphFunc_1A(flt::rsh){
+	//if(isflt) return env->make_float(GETF(a) >> GETF(b));
+	return mkerr("Cannot right shift '%s' and '%s'");
+}
+
+TyphFunc_1A(flt::get) {
+	return mkerr("Cannot get index from 'float' type");
+}
+
+TyphFunc_1A(TyphlosionFloat::eql) {
+	if(b->is(this)) return env->make_bool(GETF(a) == GETF(b));
+	return env->make_bool(a == b);
+}
+
+TyphFunc_0A(flt::inc) {
+	float& v = GETF(a);
+	v++;
+	return a;
+}
+TyphFunc_0A(flt::dec) {
+	float& v = GETF(a);
+	v--;
+	return a;
 }
 
 TyphFunc_CA(TyphlosionFloat::mkn, typh_instance_array args) {
-	if(args.size() == 1) return env->make_float(*reinterpret_cast<float*>(args[0]->data()));
-	if(args.size() == 0) return env->make_float(0);
+	if(args.cross(TyphlosionEnv::float_type)) return env->make_float(*reinterpret_cast<float*>(args[0]->data()));
+	if(args.cross()) return env->make_float(0);
 	return env->make_err("No such float constructor");
 }	
 
