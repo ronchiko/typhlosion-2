@@ -5,8 +5,8 @@
 #include <iostream>
 #include <sstream>
 
-const int KEYWORD_COUNT = 1; 
-const std::string* KEYWORDS = new std::string[KEYWORD_COUNT] { "if" };
+const int KEYWORD_COUNT = 3; 
+const std::string* KEYWORDS = new std::string[KEYWORD_COUNT] { "if", "True", "False" };
 
 /* Helper structure for reading a string */
 struct CharReader {
@@ -60,19 +60,21 @@ static Token* if_next_make(CharReader& r, TokenType failure, char expected, Toke
 /* Makes a number token */
 static Token* numtok(CharReader& r, bool intOnly = false){
 	std::stringstream ss; int dcount = 0;
-
+	int start = r.index;
 	while(isdigit(r.current()) || (!intOnly && dcount <= 0 && r.current() == '.')){
 		if(r.current() == '.') dcount++;
 		ss << r.current();
 		r.advance();
 	}
-	return token(r, dcount >= 1 ? TT_Number : TT_Int, ss.str());
+
+	return new Token(r.line, start, dcount >= 1 ? TT_Number : TT_Int, ss.str());
 }
 /* Makes a word/keyword token */
 static Token* wordtok(CharReader& r){
 	std::stringstream ss;
+	int start = r.index;
 	while(isletter(r.current())) { ss << r.current(); r.advance(); }	
-	return token(r, iskeyword(ss.str()) ? TT_Keyword : TT_Word, ss.str());
+	return new Token(r.line, start, iskeyword(ss.str()) ? TT_Keyword : TT_Word, ss.str());
 }
 
 TokenReader& Lexer::getTokens(const std::string& source) {
@@ -122,7 +124,7 @@ TokenReader& Lexer::getTokens(const std::string& source) {
 					if_next_make(reader, TT_Equals, '=', TT_Logic_Equals)));
 				  break;
 			case '!': tokens.push(alloc.allocate(
-				  	if_next_make(reader, TT_Not, '=', TT_Not_Equals)));
+				  	if_next_make(reader, TT_Logic_Not, '=', TT_Not_Equals)));
 				  break;			  
 			/* No condition */
 			case '(': tokens.push(alloc.allocate(token(reader, TT_LBracket))); break;
@@ -159,13 +161,14 @@ TokenReader& Lexer::getTokens(const std::string& source) {
 			} break;
 			case '"': {
 				std::stringstream ss;
+				int start = reader.index, sline = reader.line;
 				reader.advance();
 				while(reader.current() != '"'){
 					ss << reader.current();
 					reader.advance();
 				}
 				reader.advance();
-				tokens.push(alloc.allocate(token(reader, TT_String, ss.str())));
+				tokens.push(alloc.allocate(new Token(sline, start, TT_String, ss.str())));
 			} continue;
 			default:{
 				if(isdigit(reader.current())) { 

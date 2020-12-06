@@ -70,9 +70,9 @@ TyphFunc_1A(flt::get) {
 	return mkerr("Cannot get index from 'float' type");
 }
 
-TyphFunc_1A(TyphlosionFloat::eql) {
-	if(b->is(this)) return env->make_bool(GETF(a) == GETF(b));
-	return env->make_bool(a == b);
+TyphFunc_1A(TyphlosionFloat::cmp) {
+	if(b->is(this)) return env->make_float(GETF(a) - GETF(b));
+	return a == b ? env->make_int(0) : env->make_int(1);
 }
 
 TyphFunc_0A(flt::inc) {

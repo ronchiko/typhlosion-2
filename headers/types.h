@@ -57,7 +57,7 @@ public:
 	NoDef(TyphFunc_1A(get));
 
 	/* Logical operation*/
-	NoDef(TyphFunc_1A(eql));
+	NoDef(TyphFunc_1A(cmp));
 	
 	/* Misc functions */
 	NoDef(void log(std::ostream&, typh_instance) const);
@@ -88,11 +88,11 @@ public:
 		destructor();
 	}
 
-	void* data() const { return address; }
-	typh_type type() const { return _type; }
+	inline void* data() const { return address; }
+	inline typh_type type() const { return _type; }
 	
-	bool isConst() const { return flags & INF_Const; }
-	bool mustCopy() const { return flags & INF_ForceCopy; }
+	inline bool isConst() const { return flags & INF_Const; }
+	inline bool mustCopy() const { return flags & INF_ForceCopy; }
 
 	typh_instance copy(unsigned short int flags=0) {
 		void* cpy;
@@ -100,8 +100,16 @@ public:
 		return new TyphlosionInstance(_type, cpy, size, nullptr, flags);
 	}
 
-	bool is(const TyphlosionType* t) const { return _type == t; }
+	inline bool is(const TyphlosionType* t) const { return _type == t; }
+
+	friend std::ostream& operator<<(std::ostream&, TyphlosionInstance*);
 };
+
+inline std::ostream& operator<<(std::ostream& stream, typh_instance i){
+	if(i != nullptr)
+		i->_type->log(stream, i);
+	return stream;
+}
 
 template<typename T>
 typh_instance make(typh_type t, T* d){
@@ -133,7 +141,7 @@ public:
 	TyphFunc_0A(dec) override;
 	TyphFunc_1A(get) override;
 
-	TyphFunc_1A(eql) override;
+	TyphFunc_1A(cmp) override;
 
 	void log(std::ostream&, typh_instance) const override;
 
@@ -167,7 +175,7 @@ public:
 	TyphFunc_0A(dec) override;
 	TyphFunc_1A(get) override;
 
-	TyphFunc_1A(eql) override;
+	TyphFunc_1A(cmp) override;
 
 	void log(std::ostream&, typh_instance) const override;
 

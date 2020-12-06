@@ -5,7 +5,10 @@ set-expr	: (WORD EQ)? logic-expr
 logic-expr	: comp-expr ((AND|OR) comp-expr)*
 		: NOT logic-expr
 
-comp-expr	: arith-expr (EQL|GRT|LSS|GRE|LSE|NEQ) arith-expr
+comp-expr	: arith-expr (EQL arith-expr)*
+		: arith-expr (NEQ arith-expr)*
+		: arith-expr ((LS|LSE) arith-expr)*
+		: arith-expr ((GR|GRE) arith-expr)*
 		
 arith-expr	: term ((PLUS|MINUS) term)*
 
@@ -16,4 +19,4 @@ factor		: (PLUS|MINUS) factor
 
 atom		: NUMBER | INT
 		: WORD
-		: LBRACK expr RBRACK
+		: LBRACK set-expr RBRACK

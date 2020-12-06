@@ -36,7 +36,7 @@ public:
 	TyphFunc_0A(dec) override;
 	TyphFunc_1A(get) override;
 
-	TyphFunc_1A(eql) override;
+	TyphFunc_1A(cmp) override;
 };
 
 typedef TyphlosionError* typh_error;

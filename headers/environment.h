@@ -28,7 +28,7 @@ public:
 	/* Call functions */
 	typh_instance call(std::string, typh_instance, typh_instance);
 	typh_instance call(std::string, typh_instance);
-	bool call(typh_comp_1a, typh_instance, typh_instance);
+	float cmp(typh_instance, typh_instance);
 	
 	/* adds a typh type to this types*/
 	bool addt(std::string, typh_type);
@@ -40,10 +40,11 @@ public:
 	/* finds a typh_instance if this env */
 	typh_instance findi(std::string);
 
-	typh_instance make(typh_type t, typh_instance_array a) { return allocator.allocate(t->mkn(this, nullptr, a)); }
-	typh_instance make_float(float f) { return allocator.allocate(float_type->mkn(f)); }	
+	inline typh_instance make(typh_type t, typh_instance_array a) { return allocator.allocate(t->mkn(this, nullptr, a)); }
+	inline typh_instance make_float(float f) { return allocator.allocate(float_type->mkn(f)); }	
+	inline typh_instance make_int(int i) { return make_float(static_cast<float>(i)); }
 	typh_instance make_err(const char* fmt...);
-	typh_instance make_bool(bool b) { return allocator.allocate(b ? bool_type->typh_True : bool_type->typh_False); } 
+	inline typh_instance make_bool(bool b) { return allocator.allocate(b ? bool_type->typh_True : bool_type->typh_False); } 
 
 	/* return the upmost parent of this environment */
 	typh_env upmost() const;

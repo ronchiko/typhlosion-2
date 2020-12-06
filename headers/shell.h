@@ -15,15 +15,22 @@ public:
 	
 	void start() {
 		Lexer l;
+		Parser p;
 		while(true) {
 			std::cout << "> ";
 			std::getline(std::cin, buffer);
 			
 			TokenReader& r = l.getTokens(buffer);
-			std::cout << r << std::endl;
 
 			if(r.current()->is(TT_Word, "quit")) break;
 
+			ParseResult* pr = p.parse(r);
+			if(pr->failed)
+				std::cout << *pr << std::endl;
+			else {
+				typh_instance instance = pr->node->compute(env);
+				std::cout << instance << std::endl;
+			}
 			delete &r;
 		}
 	}

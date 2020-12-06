@@ -99,7 +99,7 @@ struct Token {
 	/* Checks if this token is a specific keyword */
 	inline bool keyword(std::string word) const { return is(TT_Keyword) && value == word; }
 	template<typename... Ts>
-	bool keyword(std::string word, Ts... b) const {
+	inline bool keyword(std::string word, Ts... b) const {
 		if(!is(TT_Keyword)) return false;
 		return keyword(word) ? true : keyword(b...);
 	}
@@ -113,7 +113,7 @@ struct TokenReader {
 	TokenReader() : tokens(), index(0) {}
 	
 	/* Adds a token to the chain */
-	void push(Token* t) { tokens.push_back(t); }
+	inline void push(Token* t) { tokens.push_back(t); }
 	
 	/* Advances to the next token in the chain, and returns the previus token */
 	inline Token* advance() {
@@ -131,7 +131,7 @@ struct TokenReader {
 	/* Gets the current token pointed to by the reader */ 
 	inline Token* current() const { return tokens[index]; }
 	/* Is the reader at its end */ 
-	inline bool end() const { return index < tokens.size(); }
+	inline bool end() const { return index >= tokens.size(); }
 
 	friend std::ostream& operator<<(std::ostream&, TokenReader&);
 };

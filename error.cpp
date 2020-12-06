@@ -28,8 +28,8 @@ TyphFunc_1A(err::get) thrwerr("Illegal operation")
 TyphFunc_0A(err::inc) thrwerr("Illegal operation")
 TyphFunc_0A(err::dec) thrwerr("Illegal operation")
 
-TyphFunc_1A(err::eql) {
-	return env->make_bool(b == a);
+TyphFunc_1A(err::cmp) {
+	return b == a ? env->make_int(0) : env->make_int(1);
 }
 
 void err::log(std::ostream& stream, typh_instance inst) const {

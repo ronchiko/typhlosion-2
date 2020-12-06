@@ -5,7 +5,7 @@
 
 TYPE_CONST::TYPE_CONST() : typh_True(nullptr), typh_False(nullptr) {
 	typh_True = make<bool>(this, new bool(true));
-	typh_False = make<bool>(this, new bool(true));
+	typh_False = make<bool>(this, new bool(false));
 	TyphlosionEnv::bool_type = this;
 }
 
@@ -37,8 +37,8 @@ TyphFunc_1A(TYPE_CONST::or_) {
 TyphFunc_0A(TYPE_CONST::nt_) {
 	return !GETB(a) ? typh_True : typh_False;
 }
-TyphFunc_1A(TYPE_CONST::eql) {
-	if(b->is(this)) return GETB(a) == GETB(b) ? typh_True : typh_False;
+TyphFunc_1A(TYPE_CONST::cmp) {
+	if(b->is(this)) return GETB(a) == GETB(b) ? env->make_int(0) : env->make_int(1);
 	OpError1A(eql);
 }
 
@@ -48,5 +48,5 @@ TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array args) {
 }
 
 void TYPE_CONST::log(std::ostream& stream, typh_instance i) const {
-	stream << GETB(i);
+	stream <<  (GETB(i) ? "True" : "False");
 }

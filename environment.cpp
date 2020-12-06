@@ -49,12 +49,14 @@ typh_instance TyphlosionEnv::call(std::string f, typh_instance a){
 	return o;
 }
 
-bool TyphlosionEnv::call(typh_comp_1a f, typh_instance a, typh_instance b){
-	return (a->type()->*f)(this, a, b);
+float TyphlosionEnv::cmp(typh_instance a, typh_instance b) {
+	typh_instance o = a->type()->cmp(this, a, b);
+	if(o == nullptr) std::cout << "Nullptr error\n";
+	if(o->is(float_type)) return *reinterpret_cast<float*>(o->data());
+	return 0;
 }
 
 typh_instance TyphlosionEnv::addi(std::string name, typh_instance instance) {
-	if(instancemap.find(name) != instancemap.end()) return nullptr;
 	instancemap[name] = instance;
 	return instance;
 }

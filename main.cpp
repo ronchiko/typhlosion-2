@@ -13,6 +13,7 @@ int main(){
 	typh_env env = new TyphlosionEnv();
 	
 	new TyphlosionFloat(); new TyphlosionError();
+	new TyphlosionBool();
 	TyphlosionShell shell(env);
 	
 	shell.start();
