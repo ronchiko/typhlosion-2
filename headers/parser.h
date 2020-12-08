@@ -56,7 +56,7 @@ struct ParseResult {
 };
 
 inline std::ostream& operator<<(std::ostream& s, const ParseResult& r){
-	if(r.failed) s << color(FG_Red) << "Error at (" << r.line << ", " << r.index << "): " << r.error << CONSOLE_RESET;
+	if(r.failed) s << color(FG_Red, CF_Bold) << "Error at (" << r.line << ", " << r.index << "): " << r.error << CONSOLE_RESET;
 	else s << r.node;
 	return s;
 }

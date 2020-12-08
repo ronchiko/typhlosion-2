@@ -20,18 +20,56 @@ typedef TyphlosionEnv* typh_env;
 
 class TyphlosionInstance;
 typedef TyphlosionInstance* typh_instance;
+
+/* Arrays */
 struct TyphlosionInstanceArray;
 typedef TyphlosionInstanceArray& typh_instance_array;
+class TyphlosionTypeArray;
+typedef TyphlosionTypeArray* typh_generic_array;
+
+/* Type related */
+typedef typh_instance (*cast_op)(typh_env, typh_instance);
+class TyphlosionType;
+typedef TyphlosionType* typh_type;
+
+typedef std::function<void(typh_env, typh_instance, typh_instance)> typh_setter;
+typedef std::function<typh_instance(typh_env, typh_instance)> typh_getter;
+
+enum MemberFlags {
+	MF_Static = 1 << 1,
+	MF_Private = 1 << 0
+};
 
 class TyphlosionType {
+protected:
+	struct _MemberInfo {
+		typh_instance instance;
+		int flags;
+
+		_MemberInfo(typh_instance ins, int flags) : instance(ins), flags(flags) {}
+		~_MemberInfo();
+		
+		bool isStatic() const { return flags & MF_Static; }
+		bool isPrivate() const { return flags & MF_Private; }
+	};
+	
+	/* adds a member to the type */
+	void addm(std::string name, typh_getter getter);
 private:
 	unsigned int typeId;
 
 	static unsigned int typeIdCounter;
 	static std::unordered_map<std::string, TyphlosionType*> types;
 public:
-	TyphlosionType() : typeId(typeIdCounter++) {}
-	
+	std::unordered_map<std::string, cast_op> casts;
+	std::unordered_map<std::string, _MemberInfo*> members;
+
+	TyphlosionType() : typeId(typeIdCounter++), casts(), members() {}
+	~TyphlosionType() {
+		for(auto& i : members) {
+			delete &(i.second);
+		}
+	}
 	/* Make new (constructor) */	
 	virtual TyphFunc_CA(mkn, typh_instance_array) = 0;
 
@@ -55,22 +93,26 @@ public:
 	NoDef(TyphFunc_0A(inc));
 	NoDef(TyphFunc_0A(dec));
 	NoDef(TyphFunc_1A(get));
-
+	NoDef(TyphFunc_CA(cll, typh_instance_array, typh_generic_array = nullptr));
+	
 	/* Logical operation*/
 	NoDef(TyphFunc_1A(cmp));
 	
 	/* Misc functions */
 	NoDef(void log(std::ostream&, typh_instance) const);
+	
+	/* Cast operation */
+	typh_instance cast(typh_env, typh_instance, std::string);
+	typh_instance access(typh_env, typh_instance, std::string);
 };
-
-typedef TyphlosionType* typh_type;
 typedef TyphFunc_1A((TyphlosionType::*typh_func_1a));
 typedef TyphFunc_0A((TyphlosionType::*typh_func_0a));
 typedef TyphComp_1A((TyphlosionType::*typh_comp_1a));
 
 enum InstanceFlags : unsigned short int {
 	INF_Const = 1 << 0,
-	INF_ForceCopy = 1 << 1
+	INF_ForceCopy = 1 << 1,
+	INF_Malloc = 1 << 2
 };
 
 /* An instance has a type & a value */
@@ -85,7 +127,10 @@ public:
 	TyphlosionInstance(typh_type type, void* data, size_t size, std::function<void()> destructor, 
 			unsigned short int flags=0) : _type(type), address(data), size(size), destructor(destructor), flags(flags) {}
 	~TyphlosionInstance() {
-		destructor();
+		if(isNull()) return;
+
+		if(flags & INF_Malloc) free(address); 
+		else destructor();
 	}
 
 	inline void* data() const { return address; }
@@ -93,15 +138,16 @@ public:
 	
 	inline bool isConst() const { return flags & INF_Const; }
 	inline bool mustCopy() const { return flags & INF_ForceCopy; }
+	inline bool isNull() const { return address == nullptr; }
 
 	typh_instance copy(unsigned short int flags=0) {
-		void* cpy;
+		void* cpy = std::malloc(size);
 		std::memcpy(cpy, address, size);
-		return new TyphlosionInstance(_type, cpy, size, nullptr, flags);
+		return new TyphlosionInstance(_type, cpy, size, nullptr, flags | INF_Malloc);
 	}
 
 	inline bool is(const TyphlosionType* t) const { return _type == t; }
-
+	inline void setFlags(unsigned short int flags) { this->flags |= flags; }
 	friend std::ostream& operator<<(std::ostream&, TyphlosionInstance*);
 };
 
@@ -142,6 +188,8 @@ public:
 	TyphFunc_1A(get) override;
 
 	TyphFunc_1A(cmp) override;
+	
+	TyphFunc_CA(cll, typh_instance_array, typh_generic_array) override;
 
 	void log(std::ostream&, typh_instance) const override;
 
@@ -174,12 +222,45 @@ public:
 	TyphFunc_0A(inc) override;
 	TyphFunc_0A(dec) override;
 	TyphFunc_1A(get) override;
+	
+	TyphFunc_CA(cll, typh_instance_array, typh_generic_array) override;
 
 	TyphFunc_1A(cmp) override;
 
 	void log(std::ostream&, typh_instance) const override;
 
 	static bool cbool(typh_instance i) { return *reinterpret_cast<bool*>(i->data()); }
+};
+
+class TyphlosionInt : public TyphlosionType {
+public:
+	TyphlosionInt();
+
+	TyphFunc_CA(mkn, typh_instance_array) override;
+	typh_instance mkn(int x) { return make<int>(this, new int(x)); }
+
+	TyphFunc_1A(add) override;
+	TyphFunc_1A(sub) override;
+	TyphFunc_1A(mul) override;
+	TyphFunc_1A(div) override;
+	TyphFunc_1A(mod) override;
+	TyphFunc_0A(inv) override;
+
+	TyphFunc_0A(nt_) override;
+	TyphFunc_1A(an_) override;
+	TyphFunc_1A(xr_) override;
+	TyphFunc_1A(or_) override;
+	TyphFunc_1A(rsh) override;
+	TyphFunc_1A(lsh) override;
+
+	TyphFunc_0A(inc) override;
+	TyphFunc_0A(dec) override;
+	TyphFunc_1A(get) override;
+
+	TyphFunc_1A(cmp) override;
+	TyphFunc_CA(cll, typh_instance_array, typh_generic_array) override;
+
+	void log(std::ostream&, typh_instance) const override;
 };
 
 struct TyphlosionInstanceArray
@@ -204,7 +285,7 @@ private:
 	}
 
 	inline bool matches(int i) const { return i == _size - 1; }
-	template<typename... Ts> inline bool matches(int i, typh_type type, Ts... b) const { 
+	template<typename... Ts> inline bool matches(int i, const typh_type type, Ts... b) const { 
 		if(i >= _size) return false;
 		if(!array[i]->is(type)) return false;
 		return matches(i + 1, b...);
@@ -229,5 +310,45 @@ public:
 	template<typename... Ts> inline bool cross(Ts... b) const { return matches(0, b...); }
 };
 
+class TyphlosionTypeArray {
+private:
+	int _size;
+	typh_type* array;
+
+	inline bool matches(int i) const { return i == _size - 1; }
+	template<typename... Ts> inline bool matches(int i, const typh_type type, Ts... b){
+		if(i >= _size) return false;
+		if(array[i] != type) return false;
+		return matches(i + 1, b...);
+	}
+
+	inline void vput(int i) {}
+	template<typename... Ts> void vput(int i, typh_type a, Ts... b){
+		if(i >= _size) return;
+		array[i] = a;
+		vput(i + 1, b...);
+	}
+
+	inline int vcount() { return 0; }
+	template<typename... Ts> inline int vcount(typh_type a, Ts... b) { return 1 + vcount(b...); }
+
+public:
+	template<typename... T> TyphlosionTypeArray(T... array) : _size(vcount(array...)), array(new typh_type[_size]) {
+		vput(0, array...);
+	}
+
+	template<typename... T> bool cross(T... a) const { return matches(0, a...); }
+
+	typh_type operator[](int i){
+		if(i < 0 || i >= _size) return nullptr;
+		return array[i];
+	}
+
+	inline int size() const { return _size; }
+};
+
 typedef TyphlosionFloat* typh_float;
 typedef TyphlosionBool* typh_bool;
+typedef TyphlosionInt* typh_int;
+
+#include "members.h"

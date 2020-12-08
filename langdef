@@ -1,20 +1,22 @@
 cmplx-expr	: expr (COMMA set-expr) SEMI_COLON
 
-set-expr	: (WORD EQ)? logic-expr
+set-expr	: ((KEYWORD:const)? WORD EQ (COLON (WORD))? logic-expr
 
 logic-expr	: comp-expr ((AND|OR) comp-expr)*
-		: NOT logic-expr
 
-comp-expr	: arith-expr (EQL arith-expr)*
-		: arith-expr (NEQ arith-expr)*
-		: arith-expr ((LS|LSE) arith-expr)*
-		: arith-expr ((GR|GRE) arith-expr)*
-		
+comp-expr	: NOT comp-expr
+		: bitwise-expr (EQL bitwise-expr)*
+		: bitwise-expr (NEQ bitwise-expr)*
+		: bitwise-expr ((LS|LSE) bitwise-expr)*
+		: bitwise-expr ((GR|GRE) bitwise-expr)*
+
+bitwise-expr	: arith-expr ((LSH|RSH|AND|OR|XOR) arith-expr)*
+	
 arith-expr	: term ((PLUS|MINUS) term)*
 
 term		: factor ((DIV|MUL) factor)*
 
-factor		: (PLUS|MINUS) factor
+factor		: (PLUS|MINUS|NOT) factor
 		: atom
 
 atom		: NUMBER | INT

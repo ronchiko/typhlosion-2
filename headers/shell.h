@@ -17,6 +17,7 @@ public:
 		Lexer l;
 		Parser p;
 		while(true) {
+			TyphlosionEnv e(env, EF_NoVar);
 			std::cout << "> ";
 			std::getline(std::cin, buffer);
 			
@@ -27,8 +28,8 @@ public:
 			ParseResult* pr = p.parse(r);
 			if(pr->failed)
 				std::cout << *pr << std::endl;
-			else {
-				typh_instance instance = pr->node->compute(env);
+			else if(pr->node){
+				typh_instance instance = pr->node->compute(&e);
 				std::cout << instance << std::endl;
 			}
 			delete &r;

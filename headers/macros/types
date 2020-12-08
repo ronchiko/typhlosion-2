@@ -12,9 +12,14 @@
 #define GETB(v) *reinterpret_cast<bool*>(v->data())
 #define GETS(v) *reinterpret_cast<std::string*>(v->data())
 
+#define GET(v, type) *reinterpret_cast<type*>(v->data())
+
 #define OpError1A(name) return env->make_err("Cant perform %s operation on '%t' type and '%t' type", #name, a->type(), b->type())
 #define OpError0A(name) return env->make_err("Cant perform %s operation on '%t' type", #name, a->type())
 
 // must define TYPE_CONST
 #define NoOp1A(name) TyphFunc_1A(TYPE_CONST::name) {OpError1A(name);}
 #define NoOp0A(name) TyphFunc_0A(TYPE_CONST::name) {OpError0A(name);}
+
+#define FDef1A(name) TyphFunc_1A(TYPE_CONST::name) 
+#define FDef0A(name) TyphFunc_0A(TYPE_CONST::name)

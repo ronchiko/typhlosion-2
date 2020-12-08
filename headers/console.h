@@ -21,7 +21,7 @@ enum ColorCode : short int {
 
 	CF_Invert = 7,
 	CF_Reset = 0,
-	CF_BoldBright = 1,
+	CF_BoldBright = 1, CF_Bold = 1, CF_Bright = 1,
 	CF_Underline = 4,
 	CF_NoBoldBright = 21,
 	CF_NoUderline = 24,

@@ -37,6 +37,14 @@ public:
 	TyphFunc_1A(get) override;
 
 	TyphFunc_1A(cmp) override;
+	TyphFunc_CA(cll, typh_instance_array, typh_generic_array) override;
+
+	typh_instance combine(typh_instance a, typh_instance b) const {
+		error_data *ad = reinterpret_cast<error_data*>(a->data()), *bd = reinterpret_cast<error_data*>(b->data());
+
+		ad->msg = ad->msg + bd->msg;
+		return a;
+	}
 };
 
 typedef TyphlosionError* typh_error;

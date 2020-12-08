@@ -5,7 +5,7 @@
 #include "types.h"
 #include "error.h"
 
-const int EF_Temporary = 1 << 0;
+const int EF_NoVar = 1 << 0;
 
 class TyphlosionEnv {
 private:
@@ -20,6 +20,7 @@ public:
 	static typh_float float_type;
 	static typh_error error_type;
 	static typh_bool bool_type;
+	static typh_int int_type;
 
 	TyphlosionEnv() : allocator(), parent(nullptr), flags(), typemap(), instancemap() {}
 	TyphlosionEnv(typh_env p) : allocator(), parent(p), flags(), typemap(), instancemap() {}
@@ -39,10 +40,15 @@ public:
 	typh_instance addi(std::string, typh_instance);
 	/* finds a typh_instance if this env */
 	typh_instance findi(std::string);
-
+	
+	/* Copies an item */
+	inline typh_instance copy(typh_instance a) { return allocator.allocate(a->copy()); }
+	inline typh_instance cast(typh_instance a, std::string type) { 
+		return allocator.allocate(a->type()->cast(this, a, type));
+       	}
 	inline typh_instance make(typh_type t, typh_instance_array a) { return allocator.allocate(t->mkn(this, nullptr, a)); }
-	inline typh_instance make_float(float f) { return allocator.allocate(float_type->mkn(f)); }	
-	inline typh_instance make_int(int i) { return make_float(static_cast<float>(i)); }
+	inline typh_instance make_float(float f) { return allocator.allocate(float_type->mkn(f)); }
+	inline typh_instance make_int(int i) { return allocator.allocate(int_type->mkn(i)); }
 	typh_instance make_err(const char* fmt...);
 	inline typh_instance make_bool(bool b) { return allocator.allocate(b ? bool_type->typh_True : bool_type->typh_False); } 
 

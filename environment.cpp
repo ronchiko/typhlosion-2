@@ -20,6 +20,14 @@ constexpr unsigned int str2int(const char* str, int h = 0){
 }
 
 typh_instance call_function(std::string f, typh_instance a, typh_instance b, typh_env e){
+	bool aerror = a->is(e->error_type);
+	bool berror = b == nullptr ? false : b->is(e->error_type);
+	
+	if(aerror && berror) {
+		return reinterpret_cast<typh_error>(a->type())->combine(a, b);
+	}else if(aerror) return a;
+	 else if(berror) return b;
+
 	switch(str2int(f.c_str())){
 		case str2int("add"): return CALL_OP1(add);
 		case str2int("sub"): return CALL_OP1(sub);
@@ -35,6 +43,11 @@ typh_instance call_function(std::string f, typh_instance a, typh_instance b, typ
 		case str2int("or"):  case str2int("or_"): return CALL_OP1(or_);
 		case str2int("lsh"): return CALL_OP1(lsh);
 		case str2int("rsh"): return CALL_OP1(rsh);
+
+		case str2int("inc"): return CALL_OP0(inc);
+		case str2int("dec"): return CALL_OP0(dec);
+		case str2int("get"): return CALL_OP1(get);
+		
 		default: return nullptr;
 	}
 }
@@ -51,13 +64,22 @@ typh_instance TyphlosionEnv::call(std::string f, typh_instance a){
 
 float TyphlosionEnv::cmp(typh_instance a, typh_instance b) {
 	typh_instance o = a->type()->cmp(this, a, b);
-	if(o == nullptr) std::cout << "Nullptr error\n";
 	if(o->is(float_type)) return *reinterpret_cast<float*>(o->data());
 	return 0;
 }
 
 typh_instance TyphlosionEnv::addi(std::string name, typh_instance instance) {
-	instancemap[name] = instance;
+	if(flags & EF_NoVar) {
+		if(parent == nullptr) return make_err("Cannot decalre a variable inside this environment"); 
+		return parent->addi(name, instance);
+	}
+	
+	if(instancemap.find(name) != instancemap.end()){
+		if(instancemap[name]->isConst()) {
+			return make_err("Cannot modify constant '%s'.", name.c_str());
+		}
+	}
+	instancemap[name] = copy(instance);
 	return instance;
 }
 
@@ -75,11 +97,13 @@ typh_type TyphlosionEnv::findt(std::string name) {
 	switch(str2int(name.c_str())){
 		case str2int("float"): return float_type;
 		case str2int("error"): return error_type;
+		case str2int("bool"): return bool_type;
+		case str2int("int"): return int_type;
 	}
 	
 	/* search in custom types */
 	if(typemap.find(name) == typemap.end()) { 
-		if(parent == nullptr) return nullptr; //make_err("No type known as %s.", name);
+		if(parent == nullptr) return nullptr; //make_err("No type known as '%s'.", name);
 		return parent->findt(name);
 	}
 	return typemap[name];
@@ -87,7 +111,7 @@ typh_type TyphlosionEnv::findt(std::string name) {
 
 typh_instance TyphlosionEnv::findi(std::string name) {
 	if(instancemap.find(name) == instancemap.end()) {
-		if(parent == nullptr) return make_err("No instance known as %s.", name);
+		if(parent == nullptr) return make_err("No instance known as '%s'.", name.c_str());
 		return parent->findi(name);
 	}
 	return instancemap[name];
@@ -142,7 +166,9 @@ typh_instance TyphlosionEnv::make_err(const char* fmt...){
 std::string TyphlosionEnv::namet(typh_type t) {
 	
 	if(t == float_type) return "float";
-	if(t == error_type) return "error";
+	else if(t == error_type) return "error";
+	else if(t == bool_type) return "bool";
+	else if(t == int_type) return "int";
 
 	for(auto& i : typemap){
 		if(i.second == t) return i.first;

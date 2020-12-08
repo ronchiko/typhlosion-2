@@ -50,6 +50,20 @@ static result_t atom(TokenReader& r) {
 			r.current()->keyword("False", "True")) {
 		token_t token = Secure(r.advance());
 		return result->success(alloc.allocate(new ConstantNode(token->value, token->type)));
+	}else cif(r.current()->matches(TT_Word)) /* WORD (INC | DEC)? */{
+		token_t token = Secure(result->advance(r));
+		cif(r.current()->matches(TT_Increment | TT_Decrement)) {
+			token_t op = Secure(result->advance(r));
+			return result->success(alloc.allocate(new ProcessNode(token->value, op->type)));	
+		}
+		return result->success(alloc.allocate(new RefrenceNode(token->value)));
+	}else cif(r.current()->matches(TT_Increment | TT_Decrement)) {
+		token_t op = Secure(result->advance(r));
+		cif(!r.current()->is(TT_Word)) return result->failure("Expected an identifier");
+		token_t ref = Secure(result->advance(r));
+		
+		return result->success(alloc.allocate(new UnaryNode(op->type, 
+						alloc.allocate(new RefrenceNode(ref->value)))));
 	}
 	return result->failure("Expected a identifier, keyword, constant or '('", r.current());
 }
@@ -57,9 +71,12 @@ static result_t atom(TokenReader& r) {
 static result_t factor(TokenReader& r){
 	result_t result = new ParseResult(r.current());
 
-	cif(r.current()->matches(TT_Plus | TT_Minus)) {
+	cif(r.current()->matches(TT_Plus | TT_Minus | TT_Not)) {
 		token_t op = Secure(r.advance());
 		node_t fact = Secure(result->register_(factor(r)));
+		
+		fact = Secure(alloc.allocate(new UnaryNode(op->type, fact)));
+
 		return result->success(fact);
 	}
 	node_t a = Secure(result->register_(atom(r)));
@@ -67,16 +84,29 @@ static result_t factor(TokenReader& r){
 }
 
 static result_t term(TokenReader& r){
-	return chain_bin(r, &factor, TT_Mult | TT_Div);
+	return chain_bin(r, &factor, TT_Mult | TT_Div | TT_Mod);
 }
 
 static result_t arith_expr(TokenReader& r) {
 	return chain_bin(r, &term, TT_Plus | TT_Minus);
 }
 
+static result_t bitwise_expr(TokenReader& r) {
+	return chain_bin(r, &arith_expr, TT_And | TT_Or | TT_Xor | TT_LShift | TT_RShift);
+}
+
 static result_t comp_expr(TokenReader& r){
 	result_t result = new ParseResult(r.current());
-	node_t left = Secure(result->register_(arith_expr(r)));
+
+	cif(r.current()->matches(TT_Logic_Not)){
+		Secure(result->advance(r));
+
+		node_t nnode = Secure(result->register_(comp_expr(r)));
+
+		return result->success(new UnaryNode(TT_Logic_Not, nnode));
+	}
+
+	node_t left = Secure(result->register_(bitwise_expr(r)));
 
 	cif(!r.current()->matches(TT_Not_Equals | TT_Logic_Equals | TT_Less | TT_Greater | TT_Less_Equals | TT_Greater_Equals))
 		return result->success(left);
@@ -97,7 +127,7 @@ static result_t comp_expr(TokenReader& r){
 		token_t t = Secure(r.advance());
 	
 		// Push to comparison node
-		node_t right = Secure(result->register_(arith_expr(r)));
+		node_t right = Secure(result->register_(bitwise_expr(r)));
 		reinterpret_cast<ComparisonNode*>(cmpn)->push(t->type, right);
 	}
 	
@@ -111,33 +141,50 @@ static result_t comp_expr(TokenReader& r){
 static result_t logic_expr(TokenReader& r) {
 	result_t result = new ParseResult(r.current());
 
-	cif(r.current()->is(TT_Logic_Not)) {
+	/*cif(r.current()->is(TT_Logic_Not)) {
 		Secure(r.advance());
 		node_t invert = Secure(result->register_(logic_expr(r)));
 
 		invert = alloc.allocate(new UnaryNode(TT_Logic_Not, invert));	
 		return result->success(invert);
-	}
+	}*/
 	node_t chain = Secure(result->register_(chain_bin(r, &comp_expr, TT_Logic_And | TT_Logic_Or)));
 	return result->success(chain);
 }
 
 static result_t expr(TokenReader& r){
 	result_t result = new ParseResult(r.current());
-	
+	bool isconst = false;
+	cif(r.current()->keyword("const")){
+		isconst = true;
+		Secure(result->advance(r));
+	}	
 	/* Check if defined node */
 	cif(r.current()->is(TT_Word)) {
 		/* Get the setters values */
 		token_t name = Secure(r.advance());
+		std::string castto;
+		cif(r.current()->is(TT_Colon)) {
+			Secure(result->advance(r));
+			cif(!r.current()->is(TT_Word) &&
+					!r.current()->keyword("int", "float", "bool", "string"))
+				return result->failure("Expected type specifier.");
+			token_t typet = Secure(result->advance(r));
+			castto = typet->value;
+		}
 		cif(r.current()->is(TT_Equals)) {
 			Secure(r.advance());
 			node_t expr_node = Secure(result->register_(logic_expr(r)));
-			
-			expr_node = alloc.allocate(new DefineNode(name->value, expr_node));
+				
+			expr_node = alloc.allocate(new DefineNode(name->value, expr_node, castto));
+			reinterpret_cast<DefineNode*>(expr_node)->isConst = isconst;
 			return result->success(expr_node);
 		}
 		r.revert();
 	}
+
+	if(isconst) return result->failure("'const' must be followed by an variable declaration");
+
 	node_t node = Secure(result->register_(logic_expr(r)));
 	return result->success(node);
 }

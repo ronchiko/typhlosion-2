@@ -20,7 +20,7 @@ struct ConstantNode : public ParserNode {
 	
 	typh_instance compute(typh_env env) override {
 		switch(type){
-			case TT_Int:
+			case TT_Int:	return env->make_int(std::stoi(value));
 			case TT_Number: return env->make_float(std::stof(value));
 			case TT_Keyword:
 				if(value == "True") return env->make_bool(true);
@@ -32,14 +32,34 @@ struct ConstantNode : public ParserNode {
 };
 
 struct DefineNode : public ParserNode {
+public:
 	std::string name;
 	node_t value;
+	std::string force_type;
+	bool isConst;
 
-	DefineNode(std::string name, node_t value) : name(name), value(value) {}
-
+	DefineNode(std::string name, node_t value, std::string t) : name(name), value(value), force_type(t), isConst(false) {}
+	
 	typh_instance compute(typh_env env) override {
-		return env->addi(name, value->compute(env));
+		bool defined =  !env->findi(name)->is(TyphlosionEnv::error_type);
+		if(isConst && defined){
+			return env->make_err("Cannot mark a declared value as constant");
+		}
+
+		typh_instance inst = value->compute(env);
+
+		if(inst->is(env->error_type) && force_type != "error") return inst;
+
+		if(mustCast() && inst->type() != env->findt(force_type)) {
+			inst = env->cast(inst, force_type); 
+		}
+		if(isConst) {
+			inst->setFlags(INF_Const);
+		}
+		return env->addi(name, inst);
 	}
+private:
+	inline bool mustCast() const { return !force_type.empty(); }
 };
 
 struct BinaryNode : public ParserNode {
@@ -58,6 +78,8 @@ struct BinaryNode : public ParserNode {
 			case TT_Logic_And: case TT_And: return env->call("and", left->compute(env), right->compute(env));
 			case TT_Xor: return env->call("xor", left->compute(env), right->compute(env));
 			case TT_Logic_Or: case TT_Or: return env->call("or", left->compute(env), right->compute(env));
+			case TT_RShift: return env->call("rsh", left->compute(env), right->compute(env));
+			case TT_LShift: return env->call("lsh", left->compute(env), right->compute(env));
 		}
 		return env->make_err("Illegal operation");
 	}
@@ -104,6 +126,35 @@ struct ComparisonNode : public ParserNode {
 			}
 		}
 		return TYPH_BOOL(final_);
+	}
+};
+
+struct RefrenceNode : public ParserNode {
+	std::string name;
+
+	RefrenceNode(std::string& s) : name(s) {}
+	
+	typh_instance compute(typh_env env) {
+		return env->findi(name);
+	}
+};
+
+struct ProcessNode : public ParserNode {
+	TokenType t;
+	std::string ref;
+
+	ProcessNode(std::string ref, TokenType t) : ref(ref), t(t) {}
+
+	typh_instance compute(typh_env env) {
+		typh_instance var = env->findi(ref);
+		if(var == nullptr) return env->make_err("No variable known as '%s'.", ref);
+		typh_instance p = env->copy(var);	
+		switch(t) {
+			case TT_Increment: env->call("inc", var); break;
+			case TT_Decrement: env->call("dec", var); break;
+			default: return env->make_err("Illegal operation");
+		}
+		return p;
 	}
 };
 

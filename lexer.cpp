@@ -6,7 +6,7 @@
 #include <sstream>
 
 const int KEYWORD_COUNT = 3; 
-const std::string* KEYWORDS = new std::string[KEYWORD_COUNT] { "if", "True", "False" };
+const std::string* KEYWORDS = new std::string[KEYWORD_COUNT] { "const", "True", "False" };
 
 /* Helper structure for reading a string */
 struct CharReader {
@@ -142,7 +142,8 @@ TokenReader& Lexer::getTokens(const std::string& source) {
 		       	case '?': tokens.push(alloc.allocate(token(reader, TT_Question))); break;
 			case '#': tokens.push(alloc.allocate(token(reader, TT_Hash))); break;
 			case '@': tokens.push(alloc.allocate(token(reader, TT_At))); break;
-			case '$': tokens.push(alloc.allocate(token(reader, TT_Dollar))); break; 
+			case '$': tokens.push(alloc.allocate(token(reader, TT_Dollar))); break;
+			case '~': tokens.push(alloc.allocate(token(reader, TT_Not))); break; 
 			/* Advanced condition */
 			case '.': {
 				char c = reader.advance();
@@ -157,6 +158,7 @@ TokenReader& Lexer::getTokens(const std::string& source) {
 					token->type = TT_Number;
 					token->value = "0." + token->value;
 					tokens.push(alloc.allocate(token));
+					continue;
 				}
 			} break;
 			case '"': {

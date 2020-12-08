@@ -47,6 +47,10 @@ TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array args) {
 	return env->make_err("No such 'bool' error");
 }
 
+TyphFunc_CA(TYPE_CONST::cll, typh_instance_array, typh_generic_array) {
+	return env->make_err("'bool' is not callable");
+}
+
 void TYPE_CONST::log(std::ostream& stream, typh_instance i) const {
 	stream <<  (GETB(i) ? "True" : "False");
 }

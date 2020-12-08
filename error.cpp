@@ -1,44 +1,50 @@
 
 #include "error.h"
 #include "environment.h"
+#include "console.h"
 
 #define err TyphlosionError
 
-#define thrwerr(msg) { return env->make_err(msg); }
+#define ErrorOp { if(b->is(this)) return combine(a, b); return a; }
+
 
 err::err() {
 	TyphlosionEnv::error_type = this;
 }
 
-TyphFunc_1A(err::add) thrwerr("Cannot add error types")
-TyphFunc_1A(err::sub) thrwerr("Cannot sub error types")
-TyphFunc_1A(err::mul) thrwerr("Illegal operation") 
-TyphFunc_1A(err::div) thrwerr("Illegal operation")
-TyphFunc_0A(err::inv) thrwerr("Illegal operation")
-TyphFunc_1A(err::mod) thrwerr("Illegal operation")
+TyphFunc_1A(err::add) ErrorOp
+TyphFunc_1A(err::sub) ErrorOp
+TyphFunc_1A(err::mul) ErrorOp
+TyphFunc_1A(err::div) ErrorOp
+TyphFunc_0A(err::inv) { return a; }
+TyphFunc_1A(err::mod) ErrorOp
 
-TyphFunc_1A(err::an_) thrwerr("Illegal operation")
-TyphFunc_1A(err::xr_) thrwerr("Illegal operation")
-TyphFunc_1A(err::or_) thrwerr("Illegal operation")
-TyphFunc_1A(err::lsh) thrwerr("Illegal operation")
-TyphFunc_1A(err::rsh) thrwerr("Illegal operation") 
-TyphFunc_0A(err::nt_) thrwerr("Illegal operation")
+TyphFunc_1A(err::an_) ErrorOp
+TyphFunc_1A(err::xr_) ErrorOp
+TyphFunc_1A(err::or_) ErrorOp
+TyphFunc_1A(err::lsh) ErrorOp
+TyphFunc_1A(err::rsh) ErrorOp
+TyphFunc_0A(err::nt_) { return a; }
 
-TyphFunc_1A(err::get) thrwerr("Illegal operation")
-TyphFunc_0A(err::inc) thrwerr("Illegal operation")
-TyphFunc_0A(err::dec) thrwerr("Illegal operation")
+TyphFunc_1A(err::get) ErrorOp
+TyphFunc_0A(err::inc) { return a; }
+TyphFunc_0A(err::dec) { return a; }
 
 TyphFunc_1A(err::cmp) {
 	return b == a ? env->make_int(0) : env->make_int(1);
 }
 
+TyphFunc_CA(err::cll, typh_instance_array, typh_generic_array) {
+	return env->make_err("'error' is not callable");
+}
+
 void err::log(std::ostream& stream, typh_instance inst) const {
-	stream << "\033[1;31m";
+	stream << color(CF_Bold, FG_Red);
 
 	error_data* data = reinterpret_cast<error_data*>(inst->data());
-	stream << "Error Thrown! " << data->msg;
+	stream << "Unhandled error: " << data->msg;
 
-	stream << "\033[0m";
+	stream << CONSOLE_RESET;
 }
 
 TyphFunc_CA(err::mkn, typh_instance_array args) {
