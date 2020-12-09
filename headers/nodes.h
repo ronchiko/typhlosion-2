@@ -129,25 +129,41 @@ struct ComparisonNode : public ParserNode {
 	}
 };
 
-struct RefrenceNode : public ParserNode {
+struct ChainableNode : public ParserNode {
+	ChainableNode* next;
+
+	ChainableNode () : next(nullptr) {}
+	ChainableNode (ChainableNode* next) : next(next) {}
+
+	typh_instance compute(typh_env env) override {
+		typh_instance g = get(env, nullptr);
+		if(next) return next->get(env, g);
+		return g;
+	}
+
+	virtual typh_instance get(typh_env env, typh_instance e) = 0;
+
+	void setn(ChainableNode* next) { this->next = next; }
+};
+
+struct RefrenceNode : public ChainableNode {
 	std::string name;
 
-	RefrenceNode(std::string& s) : name(s) {}
+	RefrenceNode(std::string& s) : ChainableNode(), name(s) {}
 	
-	typh_instance compute(typh_env env) {
+	typh_instance get(typh_env env, typh_instance a) override {
 		return env->findi(name);
 	}
 };
 
 struct ProcessNode : public ParserNode {
 	TokenType t;
-	std::string ref;
+	ParserNode* ref;
 
-	ProcessNode(std::string ref, TokenType t) : ref(ref), t(t) {}
+	ProcessNode(ParserNode* ref, TokenType t) : ref(ref), t(t) {}
 
-	typh_instance compute(typh_env env) {
-		typh_instance var = env->findi(ref);
-		if(var == nullptr) return env->make_err("No variable known as '%s'.", ref);
+	typh_instance compute(typh_env env) override {
+		typh_instance var = ref->compute(env);
 		typh_instance p = env->copy(var);	
 		switch(t) {
 			case TT_Increment: env->call("inc", var); break;
@@ -155,6 +171,50 @@ struct ProcessNode : public ParserNode {
 			default: return env->make_err("Illegal operation");
 		}
 		return p;
+	}
+};
+
+struct CallNode : public ChainableNode {
+	std::vector<ParserNode*> arguments;
+	std::vector<std::string> generic_arguments;
+
+	CallNode() : ChainableNode(), arguments(), generic_arguments() {}
+
+	typh_instance get(typh_env env, typh_instance e) override {
+		std::cout << "Calling started\n";	
+		typh_instance_array args = new TyphlosionInstanceArray(arguments.size());
+		typh_generic_array gargs = new TyphlosionTypeArray(generic_arguments.size());
+		
+		for(int i = 0; i < args->size(); i++){
+			typh_instance generated = arguments[i]->compute(env);
+			args->put(i, generated);
+		}
+		for(int i = 0 ; i < gargs->size(); i++){
+			typh_type type = env->findt(generic_arguments[i]);
+			if(!type) return env->make_err("No type known as '%t'.", type);
+			gargs->put(i, type);
+		}
+		
+		std::cout << "Calling\n";
+		typh_instance inst = env->call(e, args, gargs);
+		std::cout << "Called\n";
+		
+		delete args;
+		delete gargs;
+		return inst;
+	}
+
+	inline void push_arg(ParserNode* n) { arguments.push_back(n); }
+	inline void push_garg(std::string n) { generic_arguments.push_back(n); }
+};
+
+struct AccessNode : public ChainableNode {
+	std::string word;
+
+	AccessNode(std::string prop) : ChainableNode(), word(prop) {}
+
+	typh_instance get(typh_env env, typh_instance e) override {
+		return env->access(e, word);
 	}
 };
 
@@ -173,3 +233,5 @@ struct VectorNode : public ParserNode {
 		return nullptr;
 	}
 };
+
+typedef ChainableNode* chain_node_t;

@@ -48,6 +48,6 @@ void err::log(std::ostream& stream, typh_instance inst) const {
 }
 
 TyphFunc_CA(err::mkn, typh_instance_array args) {
-	if(args.size() != 0) return env->make_err("No such constructor");
+	if(args->size() != 0) return env->make_err("No such constructor");
 	return env->make_err("an error was thrown.");
 }

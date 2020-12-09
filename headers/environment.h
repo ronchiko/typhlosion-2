@@ -30,7 +30,7 @@ public:
 	typh_instance call(std::string, typh_instance, typh_instance);
 	typh_instance call(std::string, typh_instance);
 	float cmp(typh_instance, typh_instance);
-	
+	typh_instance call(typh_instance, typh_instance_array, typh_generic_array);
 	/* adds a typh type to this types*/
 	bool addt(std::string, typh_type);
 	/* finds a typh_type that is defined in this env*/
@@ -46,6 +46,9 @@ public:
 	inline typh_instance cast(typh_instance a, std::string type) { 
 		return allocator.allocate(a->type()->cast(this, a, type));
        	}
+	inline typh_instance access(typh_instance a, std::string member) {
+		return allocator.allocate(a->type()->access(this, a, member));
+	}
 	inline typh_instance make(typh_type t, typh_instance_array a) { return allocator.allocate(t->mkn(this, nullptr, a)); }
 	inline typh_instance make_float(float f) { return allocator.allocate(float_type->mkn(f)); }
 	inline typh_instance make_int(int i) { return allocator.allocate(int_type->mkn(i)); }

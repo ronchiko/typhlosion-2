@@ -13,6 +13,7 @@
 
 static TyphAllocator& alloc = *new TyphAllocator();
 static result_t expr(TokenReader&);
+static result_t getter(TokenReader&);
 
 typedef result_t (*parse_func)(TokenReader&);
 
@@ -36,6 +37,98 @@ static result_t chain_bin(TokenReader& r, parse_func side, l_int tokens){
 	return chain_bin(r, side, side, tokens);
 }
 
+static result_t callBrackets(result_t result, TokenReader& r, CallNode* callable){
+	
+	return result->success(callable);
+}
+
+static result_t id(TokenReader& r){
+	result_t result = new ParseResult(r.current());
+	cif(!r.current()->is(TT_Word)) return result->failure("Expected a word");
+	
+	token_t idToken = Secure(result->advance(r));
+	chain_node_t refn = alloc.allocate(new RefrenceNode(idToken->value));
+
+	cif(r.current()->matches(TT_LAngularBracket | TT_LBracket | TT_Dot | TT_LSquareBracket)){
+		chain_node_t gettern = (chain_node_t)Secure(result->register_(getter(r)));
+		refn->setn(gettern);
+	}
+	return result->success(refn);
+
+}
+
+static result_t getter(TokenReader& r) {
+	result_t result = new ParseResult(r.current());
+	
+	CallNode* callable = nullptr;
+	cswitch(r.current()->type){
+		case TT_LAngularBracket: {
+			Secure(result->advance(r));
+		
+			callable = alloc.allocate(new CallNode());
+		
+			token_t token = Secure(result->advance(r));
+			callable->push_garg(token->value);
+
+			cwhile(r.current()->is(TT_Comma)) {
+				Secure(result->advance(r));
+
+				cif(!r.current()->is(TT_Word)) return result->failure("Expected a word");
+
+				token_t token = Secure(result->advance(r));
+				callable->push_garg(token->value);
+			}
+
+			cif(!r.current()->is(TT_Greater)) return result->failure("Expected '>'");
+			Secure(result->advance(r));
+			cif(!r.current()->is(TT_LBracket)) return result->failure("Expected '('");
+		}
+	 	case TT_LBracket:{
+			if(!callable) callable = alloc.allocate(new CallNode());
+					 
+			Secure(result->advance(r));
+			
+			/* Call with no arguments */
+			if(!r.current()->is(TT_RBracket)) {
+				/* Single argument */
+				node_t ex = Secure(result->register_(expr(r)));
+				callable->push_arg(ex);
+	
+				/* Many arguments */
+				cwhile(r.current()->is(TT_Comma)){
+					Secure(result->advance(r));
+				
+					node_t ex = Secure(result->register_(expr(r)));
+					callable->push_arg(ex);
+				}
+			
+				cif(!r.current()->is(TT_RBracket)) return result->failure("Expected ')'");
+			}
+
+			Secure(result->advance(r));
+
+			cif(r.current()->matches(TT_LAngularBracket | TT_LBracket | TT_Dot | TT_LSquareBracket)){
+				chain_node_t gettern = (chain_node_t)Secure(result->register_(getter(r)));
+				callable->setn(gettern);
+			}
+			return result->success(callable);
+		} break;
+		case TT_Dot: {
+			Secure(result->advance(r));
+			token_t wordn = Secure(result->advance(r));
+			chain_node_t refn = alloc.allocate(new AccessNode(wordn->value));
+			
+			cif(r.current()->matches(TT_LAngularBracket | TT_LBracket | TT_Dot | TT_LSquareBracket)){
+				chain_node_t gettern = (chain_node_t)Secure(result->register_(getter(r)));
+				refn->setn(gettern);
+			}
+			return result->success(refn);
+		} break;
+		default:
+			return result->failure("Expected '[', '(', '<' or '.'."); 
+	}
+}
+
 static result_t atom(TokenReader& r) {
 	result_t result = new ParseResult(r.current());
 	cif(r.current()->is(TT_LBracket)) {
@@ -46,24 +139,28 @@ static result_t atom(TokenReader& r) {
 		cif(!r.current()->is(TT_RBracket)) return result->failure("Expected ')'");
 		Secure(r.advance());
 		return result->success(expr_);
+
 	}else cif(r.current()->matches(TT_Number | TT_Int) ||
 			r.current()->keyword("False", "True")) {
 		token_t token = Secure(r.advance());
 		return result->success(alloc.allocate(new ConstantNode(token->value, token->type)));
+	
 	}else cif(r.current()->matches(TT_Word)) /* WORD (INC | DEC)? */{
-		token_t token = Secure(result->advance(r));
+		node_t token = Secure(result->register_(id(r)));
+		/* Check post operators */
 		cif(r.current()->matches(TT_Increment | TT_Decrement)) {
 			token_t op = Secure(result->advance(r));
-			return result->success(alloc.allocate(new ProcessNode(token->value, op->type)));	
+			return result->success(alloc.allocate(new ProcessNode(token, op->type)));	
 		}
-		return result->success(alloc.allocate(new RefrenceNode(token->value)));
+		return result->success(token);
 	}else cif(r.current()->matches(TT_Increment | TT_Decrement)) {
 		token_t op = Secure(result->advance(r));
+
+		/* Get the modifable operator */
 		cif(!r.current()->is(TT_Word)) return result->failure("Expected an identifier");
-		token_t ref = Secure(result->advance(r));
+		node_t ref = Secure(result->register_(id(r)));
 		
-		return result->success(alloc.allocate(new UnaryNode(op->type, 
-						alloc.allocate(new RefrenceNode(ref->value)))));
+		return result->success(alloc.allocate(new UnaryNode(op->type, ref)));
 	}
 	return result->failure("Expected a identifier, keyword, constant or '('", r.current());
 }

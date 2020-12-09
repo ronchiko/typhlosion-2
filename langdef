@@ -1,6 +1,6 @@
 cmplx-expr	: expr (COMMA set-expr) SEMI_COLON
 
-set-expr	: ((KEYWORD:const)? WORD EQ (COLON (WORD))? logic-expr
+set-expr	: ((KEYWORD:const)? id (COLON (WORD))? (EQ|PLUS_EQ|MINUS_EQ|MUL_EQ|DIV_EQ|OR_EQ|MOD_EQ|AND_EQ|XOR_EQ) logic-expr
 
 logic-expr	: comp-expr ((AND|OR) comp-expr)*
 
@@ -14,11 +14,18 @@ bitwise-expr	: arith-expr ((LSH|RSH|AND|OR|XOR) arith-expr)*
 	
 arith-expr	: term ((PLUS|MINUS) term)*
 
-term		: factor ((DIV|MUL) factor)*
+term		: factor ((DIV|MUL|MOD) factor)*
 
 factor		: (PLUS|MINUS|NOT) factor
 		: atom
 
 atom		: NUMBER | INT
-		: WORD
+		: AT id
+		: id
 		: LBRACK set-expr RBRACK
+
+id		: WORD (getter)*
+
+getter		: LSQB expr RSQB getter?
+		: (LANB WORD (COMMA WORD)* RANB)? LB expr (COMMA expr)* RB getter?
+		: DOT WORD getter?

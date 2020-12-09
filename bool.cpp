@@ -42,7 +42,8 @@ TyphFunc_1A(TYPE_CONST::cmp) {
 	OpError1A(eql);
 }
 
-TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array args) {
+TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array uargs) {
+	TyphlosionInstanceArray& args = *uargs;
 	if(args.cross(TyphlosionEnv::bool_type)) return GETB(args[0]) ?  typh_True : typh_False;
 	return env->make_err("No such 'bool' error");
 }

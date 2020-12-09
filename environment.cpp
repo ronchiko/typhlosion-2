@@ -68,6 +68,12 @@ float TyphlosionEnv::cmp(typh_instance a, typh_instance b) {
 	return 0;
 }
 
+typh_instance TyphlosionEnv::call(typh_instance a, typh_instance_array args, typh_generic_array gargs){
+	if(a->is(error_type)) return a;
+
+	return a->type()->cll(this, a, args, gargs);
+}
+
 typh_instance TyphlosionEnv::addi(std::string name, typh_instance instance) {
 	if(flags & EF_NoVar) {
 		if(parent == nullptr) return make_err("Cannot decalre a variable inside this environment"); 

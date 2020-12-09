@@ -37,8 +37,16 @@ TyphFunc_1A(flt::mul){
 	return mkerr("Cannot multiply '%s' and '%s'");
 }
 TyphFunc_1A(flt::div){
-	if(isflt) return env->make_float(GETF(a) / GETF(b));
-	if(isint) return env->make_float(GETF(a) / GETI(b));
+	if(isflt) {
+		float bf = GETF(b);
+		if(bf == 0) return env->make_err("Division by zero");
+		return env->make_float(GETF(a) / bf);
+	}
+	if(isint) {
+		int bi = GETI(b);
+		if(bi == 0) return env->make_err("Division by zero");
+		return env->make_float(GETF(a) / bi);
+	}
 	return mkerr("Cannot divide '%s' with '%s'");
 }
 TyphFunc_1A(flt::mod) {
@@ -96,7 +104,8 @@ TyphFunc_0A(flt::dec) {
 	return a;
 }
 
-TyphFunc_CA(TyphlosionFloat::mkn, typh_instance_array args) {
+TyphFunc_CA(TyphlosionFloat::mkn, typh_instance_array uargs) {
+	TyphlosionInstanceArray& args = *uargs;
 	if(args.cross(TyphlosionEnv::float_type)) return env->make_float(*reinterpret_cast<float*>(args[0]->data()));
 	if(args.cross()) return env->make_float(0);
 	return env->make_err("No such float constructor");

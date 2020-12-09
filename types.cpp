@@ -4,15 +4,15 @@
 
 unsigned int TyphlosionType::typeIdCounter = 0;
 
-typh_instance TyphlosionType::cast(typh_env env, typh_instance a, std::string type_name){
+typh_instance TyphlosionType::cast(typh_env env, typh_instance a, std::string& type_name){
 	if(casts.find(type_name) == casts.end()) 
 		return env->make_err("Cannot cast from '%t' to '%s'.", a->type(), type_name.c_str());
 	return (*casts[type_name])(env, a);
 }
 
-typh_instance TyphlosionType::access(typh_env env, typh_instance a, std::string member){
+typh_instance TyphlosionType::access(typh_env env, typh_instance a, std::string& member){
 	if(members.find(member) == members.end())
-		return env->make_err("No member named '%s' in '%t'");
+		return env->make_err("No member named '%s' in '%t'", member.c_str(), a->type());
 	_MemberInfo* info = members[member];
 	if(info->isStatic()) return info->instance;
 	

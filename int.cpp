@@ -16,7 +16,8 @@ TYPE_CONST::TYPE_CONST() {
 	casts["float"] = &cast_to_float;
 }
 
-TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array args) {
+TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array uargs) {
+	TyphlosionInstanceArray& args = *uargs;
 	if(args.cross(TyphlosionEnv::int_type)) return env->make_int(GETI(args[0]));
 	else if(args.cross(float_type)) return env->make_int((int)GETF(args[0]));
 	else if(args.cross()) return env->make_int(0);
@@ -45,8 +46,16 @@ FDef1A(mul) {
 }
 
 FDef1A(div) {
-	if(b->is(this)) return env->make_int(GETI(a) / GETI(b));
-	else if(b->is(float_type)) return env->make_float((float)GETI(a) / GETF(b));
+	if(b->is(this)) {
+		int bi = GETI(b);
+		if(bi == 0) return env->make_err("Division by zero");
+		return env->make_int(GETI(a) / bi);
+	}
+	else if(b->is(float_type))  {
+		float bf = GETF(b);
+		if(bf == 0) return env->make_err("Division by zero");
+		return env->make_float((float)GETI(a) / bf);
+	}
 	OpError1A(div);
 }
 

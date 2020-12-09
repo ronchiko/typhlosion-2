@@ -23,7 +23,7 @@ typedef TyphlosionInstance* typh_instance;
 
 /* Arrays */
 struct TyphlosionInstanceArray;
-typedef TyphlosionInstanceArray& typh_instance_array;
+typedef TyphlosionInstanceArray* typh_instance_array;
 class TyphlosionTypeArray;
 typedef TyphlosionTypeArray* typh_generic_array;
 
@@ -102,8 +102,8 @@ public:
 	NoDef(void log(std::ostream&, typh_instance) const);
 	
 	/* Cast operation */
-	typh_instance cast(typh_env, typh_instance, std::string);
-	typh_instance access(typh_env, typh_instance, std::string);
+	typh_instance cast(typh_env, typh_instance, std::string&);
+	typh_instance access(typh_env, typh_instance, std::string&);
 };
 typedef TyphFunc_1A((TyphlosionType::*typh_func_1a));
 typedef TyphFunc_0A((TyphlosionType::*typh_func_0a));
@@ -291,11 +291,8 @@ private:
 		return matches(i + 1, b...);
 	}
 public:
-	template<typename... Types>
-	TyphlosionInstanceArray(int size, Types... b) : array(new typh_instance[size]), _size(size) {
-		vput(0, b...);
-	}
-
+	TyphlosionInstanceArray(int size) : array(new typh_instance[size]), _size(size) {}
+	TyphlosionInstanceArray(unsigned int size) : array(new typh_instance[size]), _size(size) {}
 	template<typename... Types>
 	TyphlosionInstanceArray(Types... b) : array(nullptr), _size(0) {
 		_size = vcount(b...);
@@ -308,6 +305,8 @@ public:
 	int size() const { return _size; }
 	
 	template<typename... Ts> inline bool cross(Ts... b) const { return matches(0, b...); }
+
+	inline void put(int index, typh_instance i) { array[index] = i; }
 };
 
 class TyphlosionTypeArray {
@@ -333,9 +332,7 @@ private:
 	template<typename... Ts> inline int vcount(typh_type a, Ts... b) { return 1 + vcount(b...); }
 
 public:
-	template<typename... T> TyphlosionTypeArray(T... array) : _size(vcount(array...)), array(new typh_type[_size]) {
-		vput(0, array...);
-	}
+	TyphlosionTypeArray(int size) : _size(size), array(new typh_type[size]) {}
 
 	template<typename... T> bool cross(T... a) const { return matches(0, a...); }
 
@@ -345,6 +342,7 @@ public:
 	}
 
 	inline int size() const { return _size; }
+	inline int put(int i, typh_type t) { array[i] == t; }
 };
 
 typedef TyphlosionFloat* typh_float;
