@@ -11,9 +11,16 @@ typh_instance cast_to_float(typh_env env, typh_instance a){
 	return env->make_float((float)GETI(a));
 }
 
+typh_instance cast_to_bool(typh_env env, typh_instance a) {
+	return env->make_bool(GETI(a) != 0);
+}
+
 TYPE_CONST::TYPE_CONST() {
 	TyphlosionEnv::int_type = this;
 	casts["float"] = &cast_to_float;
+	casts["bool"] = &cast_to_bool;
+
+	addm("self", [](typh_env env, typh_instance h) { return env->make_int(1);});
 }
 
 TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array uargs) {
@@ -86,6 +93,6 @@ FDef1A(cmp) {
 	OpError1A(comapre);
 }
 
-void TYPE_CONST::log(std::ostream& stream, typh_instance a) const {
+LDef {
 	stream << GETI(a);
 }

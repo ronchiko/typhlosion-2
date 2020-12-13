@@ -22,10 +22,15 @@ factor		: (PLUS|MINUS|NOT) factor
 atom		: NUMBER | INT
 		: AT id
 		: id
-		: LBRACK set-expr RBRACK
+		: STRING getter?
+		: LBRACK set-expr RBRACK getter?
+		: KEY:if LB logic-expr RB block
 
-id		: WORD (getter)*
+id		: WORD getter?
 
 getter		: LSQB expr RSQB getter?
-		: (LANB WORD (COMMA WORD)* RANB)? LB expr (COMMA expr)* RB getter?
+		: (LANB WORD (COMMA WORD)* RANB)? LB expr (COMMA expr)* RB (getter|block)?
 		: DOT WORD getter?
+
+block		: LCB (cmplx-expr)* RCB
+		: cmplx-expr

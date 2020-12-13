@@ -2,11 +2,13 @@
 #include "error.h"
 #include "environment.h"
 #include "console.h"
+#include "macros/types"
 
 #define err TyphlosionError
 
 #define ErrorOp { if(b->is(this)) return combine(a, b); return a; }
 
+#define TYPE_CONST err
 
 err::err() {
 	TyphlosionEnv::error_type = this;
@@ -38,10 +40,10 @@ TyphFunc_CA(err::cll, typh_instance_array, typh_generic_array) {
 	return env->make_err("'error' is not callable");
 }
 
-void err::log(std::ostream& stream, typh_instance inst) const {
+LDef {
 	stream << color(CF_Bold, FG_Red);
 
-	error_data* data = reinterpret_cast<error_data*>(inst->data());
+	error_data* data = reinterpret_cast<error_data*>(a->data());
 	stream << "Unhandled error: " << data->msg;
 
 	stream << CONSOLE_RESET;

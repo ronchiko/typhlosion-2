@@ -11,6 +11,8 @@
 #define isflt env->float_type == b->type()
 #define isint b->is(env->int_type)	
 
+#define TYPE_CONST flt
+
 typh_instance cast_to_int(typh_env env, typh_instance o){
 	return env->make_int((int)GETF(o));
 }
@@ -115,8 +117,8 @@ TyphFunc_CA(TyphlosionFloat::cll, typh_instance_array, typh_generic_array) {
        	return env->make_err("'float' is not callable"); 
 }
 
-void TyphlosionFloat::log(std::ostream& stream, typh_instance i) const { 
-	float fv = GETF(i);
+LDef { 
+	float fv = GETF(a);
 	stream << fv;
 	if(fv - (int)fv == 0) stream << ".0";
 }

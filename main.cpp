@@ -7,14 +7,14 @@
 #include "types.h"
 #include "error.h"
 #include "environment.h"
+#include "function.h"
+#include "strings.h"
 #include "parser.h"
 
 int main(){	
-	typh_env env = new TyphlosionEnv();
+	typh_env env = initRootEnvironment();
 	
-	new TyphlosionFloat(); new TyphlosionError();
-	new TyphlosionBool(); new TyphlosionInt();
-	TyphlosionShell shell(env);
+	TyphlosionShell shell(env);	
 	
 	shell.start();
 

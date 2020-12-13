@@ -138,6 +138,14 @@ static result_t atom(TokenReader& r) {
 		
 		cif(!r.current()->is(TT_RBracket)) return result->failure("Expected ')'");
 		Secure(r.advance());
+
+		cif(r.current()->matches(TT_LAngularBracket | TT_LBracket | TT_Dot | TT_LSquareBracket)){
+			chain_node_t refn = alloc.allocate(new DoGetNode(expr_));
+			chain_node_t gettern = (chain_node_t)Secure(result->register_(getter(r)));
+			refn->setn(gettern);
+			return result->success(refn);
+		}	
+
 		return result->success(expr_);
 
 	}else cif(r.current()->matches(TT_Number | TT_Int) ||
@@ -150,7 +158,7 @@ static result_t atom(TokenReader& r) {
 		/* Check post operators */
 		cif(r.current()->matches(TT_Increment | TT_Decrement)) {
 			token_t op = Secure(result->advance(r));
-			return result->success(alloc.allocate(new ProcessNode(token, op->type)));	
+			return result->success(alloc.allocate(new ProcessNode(token, op->type)));
 		}
 		return result->success(token);
 	}else cif(r.current()->matches(TT_Increment | TT_Decrement)) {

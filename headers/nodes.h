@@ -136,14 +136,28 @@ struct ChainableNode : public ParserNode {
 	ChainableNode (ChainableNode* next) : next(next) {}
 
 	typh_instance compute(typh_env env) override {
-		typh_instance g = get(env, nullptr);
-		if(next) return next->get(env, g);
-		return g;
+		return compute_sub(env, nullptr);
+	}
+
+	typh_instance compute_sub(typh_env env, typh_instance g) {
+		typh_instance i = get(env, g);
+		if(next && i) return next->compute_sub(env, i);
+		return i;
 	}
 
 	virtual typh_instance get(typh_env env, typh_instance e) = 0;
 
 	void setn(ChainableNode* next) { this->next = next; }
+};
+
+struct DoGetNode : public ChainableNode {
+	ParserNode* doNode;
+
+	DoGetNode(ParserNode* node) : ChainableNode(), doNode(node) {}
+
+	typh_instance get(typh_env env, typh_instance e) override {
+		return doNode->compute(env);
+	}
 };
 
 struct RefrenceNode : public ChainableNode {
@@ -180,8 +194,7 @@ struct CallNode : public ChainableNode {
 
 	CallNode() : ChainableNode(), arguments(), generic_arguments() {}
 
-	typh_instance get(typh_env env, typh_instance e) override {
-		std::cout << "Calling started\n";	
+	typh_instance get(typh_env env, typh_instance e) override {	
 		typh_instance_array args = new TyphlosionInstanceArray(arguments.size());
 		typh_generic_array gargs = new TyphlosionTypeArray(generic_arguments.size());
 		
@@ -192,12 +205,11 @@ struct CallNode : public ChainableNode {
 		for(int i = 0 ; i < gargs->size(); i++){
 			typh_type type = env->findt(generic_arguments[i]);
 			if(!type) return env->make_err("No type known as '%t'.", type);
+			std::cout << "Agrument type: " << generic_arguments[i] << "," << type << std::endl;
 			gargs->put(i, type);
 		}
 		
-		std::cout << "Calling\n";
 		typh_instance inst = env->call(e, args, gargs);
-		std::cout << "Called\n";
 		
 		delete args;
 		delete gargs;

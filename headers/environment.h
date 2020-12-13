@@ -1,11 +1,21 @@
 #pragma once
 
 #include <string>
+#include <functional>
+
 #include "allocator.h"
 #include "types.h"
 #include "error.h"
 
 const int EF_NoVar = 1 << 0;
+
+class TyphlosionFunction;
+typedef TyphlosionFunction* typh_func;
+
+class TyphlosionString;
+typedef TyphlosionString* typh_string;
+
+typedef std::function<typh_instance(typh_env, typh_instance, typh_instance_array, typh_generic_array)> typh_func_c;
 
 class TyphlosionEnv {
 private:
@@ -21,6 +31,8 @@ public:
 	static typh_error error_type;
 	static typh_bool bool_type;
 	static typh_int int_type;
+	static typh_func func_type;
+	static typh_string string_type;
 
 	TyphlosionEnv() : allocator(), parent(nullptr), flags(), typemap(), instancemap() {}
 	TyphlosionEnv(typh_env p) : allocator(), parent(p), flags(), typemap(), instancemap() {}
@@ -42,8 +54,8 @@ public:
 	typh_instance findi(std::string);
 	
 	/* Copies an item */
-	inline typh_instance copy(typh_instance a) { return allocator.allocate(a->copy()); }
-	inline typh_instance cast(typh_instance a, std::string type) { 
+	inline typh_instance copy(typh_instance a) { return a ? allocator.allocate(a->copy()) : nullptr; }
+	inline typh_instance cast(typh_instance a, std::string& type) { 
 		return allocator.allocate(a->type()->cast(this, a, type));
        	}
 	inline typh_instance access(typh_instance a, std::string member) {
@@ -54,6 +66,7 @@ public:
 	inline typh_instance make_int(int i) { return allocator.allocate(int_type->mkn(i)); }
 	typh_instance make_err(const char* fmt...);
 	inline typh_instance make_bool(bool b) { return allocator.allocate(b ? bool_type->typh_True : bool_type->typh_False); } 
+	inline typh_instance make_str(std::string& str) { return allocator.allocate(string_type->mkn(str)); }
 
 	/* return the upmost parent of this environment */
 	typh_env upmost() const;
@@ -61,5 +74,15 @@ public:
 	/* Name search functions */
 	std::string namet(typh_type);
 	std::string namei(typh_instance);
+	
+	inline typh_instance allocate(typh_instance t) { 	
+		return allocator.allocate(t);
+       	}
+
+	inline typh_instance make_handle(typh_func_c fnc, typh_generic_array ga, int gen) {
+		return allocator.allocate(func_type->mkn(fnc, ga, gen));
+	}	
 };
 
+typh_env initRootEnvironment();
+void bindDefaults(typh_env);

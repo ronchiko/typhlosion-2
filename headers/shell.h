@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 
+#include "types.h"
 #include "environment.h"
 #include "parser.h"
 
@@ -13,7 +14,7 @@ private:
 public:
 	TyphlosionShell(typh_env env) : buffer(), env(env) {}
 	
-	void start() {
+	void start(void) {
 		Lexer l;
 		Parser p;
 		while(true) {
@@ -30,7 +31,10 @@ public:
 				std::cout << *pr << std::endl;
 			else if(pr->node){
 				typh_instance instance = pr->node->compute(&e);
-				std::cout << instance << std::endl;
+				if(instance != nullptr) { 
+					instance->type()->log(std::cout, instance, env);
+					std::cout << std::endl;
+				}
 			}
 			delete &r;
 		}

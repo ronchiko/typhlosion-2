@@ -22,7 +22,7 @@ typh_instance TyphlosionType::access(typh_env env, typh_instance a, std::string&
 }
 
 void TyphlosionType::addm(std::string name, typh_getter getter) {
-	if(members.find(name) == members.end()) {
+	if(members.find(name) != members.end()) {
 		return;	
 	}
 	members[name] = new _MemberInfo(new TyphlosionMember(getter), 0);

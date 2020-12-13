@@ -1,5 +1,6 @@
 #pragma once
 
+#include "environment.h"
 #include "types.h"
 #include <string>
 
@@ -16,7 +17,7 @@ public:
 	TyphFunc_CA(mkn, typh_instance_array) override;
 	typh_instance mkn(std::string str) { return make<error_data>(this, new error_data(str)); }
 
-	virtual void log(std::ostream&, typh_instance) const override;
+	virtual LogFunc override;
 	
 	TyphFunc_1A(add) override;
 	TyphFunc_1A(sub) override;

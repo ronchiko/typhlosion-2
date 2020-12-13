@@ -23,3 +23,5 @@
 
 #define FDef1A(name) TyphFunc_1A(TYPE_CONST::name) 
 #define FDef0A(name) TyphFunc_0A(TYPE_CONST::name)
+
+#define LDef void TYPE_CONST::log(std::ostream& stream, typh_instance a, typh_env env) const

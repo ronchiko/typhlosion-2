@@ -1,10 +1,11 @@
 
 #include "environment.h"
-#include "types.h"
+#include "types.all"
 
 #include <stdarg.h>
 #include <iostream>
 #include <sstream>
+#include <queue>
 
 typh_float TyphlosionEnv::float_type = nullptr;
 typh_error TyphlosionEnv::error_type = nullptr;
@@ -31,7 +32,7 @@ typh_instance call_function(std::string f, typh_instance a, typh_instance b, typ
 	switch(str2int(f.c_str())){
 		case str2int("add"): return CALL_OP1(add);
 		case str2int("sub"): return CALL_OP1(sub);
-		case str2int("log"): a->type()->log(std::cout, a);
+		case str2int("log"): a->type()->log(std::cout, a, e);
 				     return nullptr;
 		case str2int("mul"): return CALL_OP1(mul);
 		case str2int("div"): return CALL_OP1(div);
@@ -105,6 +106,7 @@ typh_type TyphlosionEnv::findt(std::string name) {
 		case str2int("error"): return error_type;
 		case str2int("bool"): return bool_type;
 		case str2int("int"): return int_type;
+		case str2int("function"): return func_type;
 	}
 	
 	/* search in custom types */
@@ -156,7 +158,7 @@ typh_instance TyphlosionEnv::make_err(const char* fmt...){
 					}break;
 					case 'v':{
 						typh_instance instance = va_arg(args, typh_instance);
-						instance->type()->log(ss, instance);
+						instance->type()->log(ss, instance, this);
 					}break;
 					case '%': ss << '%'; break;
 				}
@@ -175,6 +177,7 @@ std::string TyphlosionEnv::namet(typh_type t) {
 	else if(t == error_type) return "error";
 	else if(t == bool_type) return "bool";
 	else if(t == int_type) return "int";
+	else if(t == func_type) return "function";
 
 	for(auto& i : typemap){
 		if(i.second == t) return i.first;
@@ -189,4 +192,21 @@ std::string TyphlosionEnv::namei(typh_instance t){
 	}
 	if(parent == nullptr) return std::string();
 	return parent->namei(t);
+}
+
+typh_env initRootEnvironment() {
+	typh_env env = new TyphlosionEnv();
+	
+	// Load types
+	new TyphlosionFloat();
+	new TyphlosionInt();
+	new TyphlosionBool();
+	new TyphlosionError();
+	new TyphlosionFunction();
+	new TyphlosionString();
+
+	/* Bind default constants and functions */	
+	bindDefaults(env);
+
+	return env;
 }
