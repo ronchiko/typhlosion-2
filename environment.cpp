@@ -107,6 +107,7 @@ typh_type TyphlosionEnv::findt(std::string name) {
 		case str2int("bool"): return bool_type;
 		case str2int("int"): return int_type;
 		case str2int("function"): return func_type;
+		case str2int("string"): return string_type;
 	}
 	
 	/* search in custom types */
@@ -124,6 +125,11 @@ typh_instance TyphlosionEnv::findi(std::string name) {
 	}
 	return instancemap[name];
 }
+
+typh_instance TyphlosionEnv::make_handle(typh_func_c fnc, typh_generic_array ga, int gen) {
+	return allocator.allocate(func_type->mkn(fnc, ga, gen));
+}	
+typh_instance TyphlosionEnv::make_str(std::string str)  { return allocator.allocate(string_type->mkn(str)); }
 
 typh_instance TyphlosionEnv::make_err(const char* fmt...){
 	std::stringstream ss;
@@ -172,12 +178,12 @@ typh_instance TyphlosionEnv::make_err(const char* fmt...){
 }
 
 std::string TyphlosionEnv::namet(typh_type t) {
-	
 	if(t == float_type) return "float";
 	else if(t == error_type) return "error";
 	else if(t == bool_type) return "bool";
 	else if(t == int_type) return "int";
 	else if(t == func_type) return "function";
+	else if(t == string_type) return "string";
 
 	for(auto& i : typemap){
 		if(i.second == t) return i.first;
@@ -194,6 +200,37 @@ std::string TyphlosionEnv::namei(typh_instance t){
 	return parent->namei(t);
 }
 
+struct _EnvQuery {
+	typh_instance& o;
+
+	_EnvQuery(typh_instance& o) : o(o) {}
+
+	virtual void operator()(typh_env e) = 0;
+};
+
+struct _EnvFuncQuery : public _EnvQuery {
+	typh_func_c fnc;
+	typh_generic_array ga;
+	int gens;
+
+	_EnvFuncQuery(typh_instance& o, typh_func_c fnc, typh_generic_array ga, int gens) : _EnvQuery(o), fnc(fnc), ga(ga), gens(gens) {}
+
+	void operator()(typh_env e) override {
+		o = e->make_handle(fnc, ga, gens);
+	}
+};
+
+std::queue<_EnvQuery*> queries;
+
+void do_query(typh_env e){
+	while(!queries.empty()) {
+		_EnvQuery* query = queries.front();
+		(*query)(e);
+		queries.pop();
+		delete query;
+	}
+}
+
 typh_env initRootEnvironment() {
 	typh_env env = new TyphlosionEnv();
 	
@@ -207,6 +244,12 @@ typh_env initRootEnvironment() {
 
 	/* Bind default constants and functions */	
 	bindDefaults(env);
+	
+	do_query(env);
 
 	return env;
+}
+
+void query_func_handle(typh_instance& i, typh_func_c fnc, typh_generic_array ga, int gen){
+	queries.push(new _EnvFuncQuery(i, fnc, ga, gen));
 }

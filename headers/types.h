@@ -11,7 +11,6 @@ typedef TyphlosionEnv* typh_env;
 
 #define TyphFunc_1A(name) typh_instance name(typh_env env, typh_instance a, typh_instance b) const
 #define TyphFunc_0A(name) typh_instance name(typh_env env, typh_instance a) const
-#define TyphComp_1A(name) int name(typh_env env, typh_instance a, typh_instance b) const
 #define TyphLogFunc void log(std::ostream stream, typh_instance i) const
 
 #define TyphFunc_CA(name, ...) typh_instance name(typh_env env, typh_instance a, __VA_ARGS__) const  
@@ -109,7 +108,6 @@ public:
 };
 typedef TyphFunc_1A((TyphlosionType::*typh_func_1a));
 typedef TyphFunc_0A((TyphlosionType::*typh_func_0a));
-typedef TyphComp_1A((TyphlosionType::*typh_comp_1a));
 
 enum InstanceFlags : unsigned short int {
 	INF_Const = 1 << 0,
@@ -125,9 +123,12 @@ private:
 	size_t size;
 	std::function<void()> destructor;
 	unsigned short int flags;
+	typh_instance _parent;
 public:
 	TyphlosionInstance(typh_type type, void* data, size_t size, std::function<void()> destructor, 
-			unsigned short int flags=0) : _type(type), address(data), size(size), destructor(destructor), flags(flags) {}
+			unsigned short int flags=0, typh_instance parent = nullptr) : _type(type), address(data), size(size),
+       			destructor(destructor), flags(flags), _parent(parent) {}
+
 	~TyphlosionInstance() {
 		if(isNull()) return;
 
@@ -145,9 +146,12 @@ public:
 	typh_instance copy(unsigned short int flags=0) {
 		void* cpy = std::malloc(size);
 		std::memcpy(cpy, address, size);
-		return new TyphlosionInstance(_type, cpy, size, nullptr, flags | INF_Malloc);
+		std::cout << this << ", Copy parent: " << _parent << std::endl;
+		return new TyphlosionInstance(_type, cpy, size, nullptr, flags | INF_Malloc, _parent);
 	}
 
+	inline void setp(typh_instance p) { _parent = p; }
+	inline typh_instance parent() const { return _parent; } 
 	inline bool is(const TyphlosionType* t) const { return _type == t; }
 	inline void setFlags(unsigned short int flags) { this->flags |= flags; }
 	friend std::ostream& operator<<(std::ostream&, TyphlosionInstance*);

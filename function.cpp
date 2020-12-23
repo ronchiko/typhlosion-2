@@ -50,8 +50,9 @@ typh_instance TYPE_CONST::FunctionHandle::try_call(typh_env e, typh_instance a, 
 }
 
 void TYPE_CONST::FunctionHandle::add_override(typh_func_c fnc, typh_generic_array args, int generics) {
-	FunctionSignature *sig = new FunctionSignature(generics, args ? args->size() : 0, fnc);
-	for(int i = 0; i < args->size(); i++) sig->params[i] = args->operator[](i);
+	int size = args ? args->size() : 0;
+	FunctionSignature *sig = new FunctionSignature(generics, size, fnc);
+	for(int i = 0; i < size; i++) sig->params[i] = args->operator[](i);
 	override_callers.push_back(sig);
 }
 
@@ -79,7 +80,8 @@ FDef1A(cmp) {
 TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array) { return env->make_err("Lambda functions aren't supported yet"); }
 TyphFunc_CA(TYPE_CONST::cll, typh_instance_array args, typh_generic_array gargs) {
 	auto& handle = *reinterpret_cast<TYPE_CONST::FunctionHandle*>(a->data());
-	return handle.try_call(env, a, args, gargs);
+	std::cout << "Parent:" << a->parent() << std::endl;
+	return handle.try_call(env, a->parent(), args, gargs);
 }
 
 typh_instance makeGeneralHandle(typh_func_c fnc){

@@ -20,6 +20,7 @@ struct TyphlosionFunction : public TyphlosionType {
 		void add_override(typh_func_c, typh_generic_array, int);
 
 		~FunctionHandle();
+		FunctionHandle() : general_caller(nullptr), override_callers() {}
 		FunctionHandle(typh_func_c fnc, typh_generic_array ga, int gen) : general_caller(nullptr), override_callers() {
 			add_override(fnc, ga, gen);
 		}
@@ -46,7 +47,7 @@ struct TyphlosionFunction : public TyphlosionType {
 	TyphFunc_1A(cmp) override;
 
 	typh_instance mkn(typh_func_c fnc, typh_generic_array inputs, int generics) {
-		return make<FunctionHandle>(new FunctionHandle(fnc, inputs, generics));
+		return make<FunctionHandle>(this, new FunctionHandle(fnc, inputs, generics));
 	}
 };
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "environment.h"
 #include "types.h"
+
 #include <string>
 
 class TyphlosionError : public TyphlosionType {

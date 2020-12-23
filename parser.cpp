@@ -169,6 +169,16 @@ static result_t atom(TokenReader& r) {
 		node_t ref = Secure(result->register_(id(r)));
 		
 		return result->success(alloc.allocate(new UnaryNode(op->type, ref)));
+	}else cif(r.current()->is(TT_String)) {
+		token_t str = Secure(result->advance(r));
+		
+		chain_node_t constNode = alloc.allocate(new ConstantNode(str->value, str->type));
+
+		cif(r.current()->matches(TT_Dot | TT_LSquareBracket)){
+			chain_node_t accNode = (chain_node_t)Secure(result->register_(getter(r)));
+			constNode->setn(accNode);
+		}
+		return result->success(constNode);
 	}
 	return result->failure("Expected a identifier, keyword, constant or '('", r.current());
 }

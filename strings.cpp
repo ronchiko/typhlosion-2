@@ -12,15 +12,22 @@ typh_instance str_length(typh_env env, typh_instance a, typh_instance_array args
 	return env->make_int((GETS(a)).length());
 }
 
+struct StringMembers {
+	static typh_instance length_func;
+};
+typh_instance StringMembers::length_func = nullptr;
+
 TYPE_CONST::TYPE_CONST() : TyphlosionType() {
 	TyphlosionEnv::string_type = this;
+	
+	query_func_handle(StringMembers::length_func, &str_length, nullptr, 0);
 
-	addm("length", [](typh_env e) { return e->make_handle(&str_length, nullptr, 0); });
+	addm("length", [](typh_env e, typh_instance a) { return e->copy(StringMembers::length_func); });
 }
 
 TyphFunc_1A(TYPE_CONST::mul) {
 	if(b->is(TyphlosionEnv::int_type) || b->is(TyphlosionEnv::float_type)) {
-		std::string source& = GETS(a);
+		std::string &source = GETS(a);
 		std::stringstream ss;
 		int rep = b->is(TyphlosionEnv::float_type) ? (int)GETF(b) : GETI(b);
 		if(rep < 0) return env->make_err("Cannot multiply a 'string' by a negative number");
@@ -55,6 +62,11 @@ TyphFunc_1A(TYPE_CONST::cmp) {
 	}
 	return env->make_int(a - b);
 }
+
+TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array args){
+	if(args->size() == 0) return env->make_str("");
+	return env->make_err("No 'string' constuctor ('%i')", args->size());
+}	
 
 LDef {
 	stream << GETS(a);

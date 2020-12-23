@@ -12,25 +12,6 @@ typedef Token* token_t;
 
 #define TYPH_BOOL(cmp) (cmp) ? TYPH_TRUE : TYPH_FALSE
 
-struct ConstantNode : public ParserNode {
-	std::string value;
-	TokenType type;
-
-	ConstantNode(std::string v, TokenType t) : value(v), type(t) {}
-	
-	typh_instance compute(typh_env env) override {
-		switch(type){
-			case TT_Int:	return env->make_int(std::stoi(value));
-			case TT_Number: return env->make_float(std::stof(value));
-			case TT_Keyword:
-				if(value == "True") return env->make_bool(true);
-				else if(value == "False") return env->make_bool(false);
-				break;
-		}
-		return env->make_err("Unknown type constant");
-	}
-};
-
 struct DefineNode : public ParserNode {
 public:
 	std::string name;
@@ -141,13 +122,37 @@ struct ChainableNode : public ParserNode {
 
 	typh_instance compute_sub(typh_env env, typh_instance g) {
 		typh_instance i = get(env, g);
-		if(next && i) return next->compute_sub(env, i);
+		if(i) {
+			if(i->type() == env->error_type) return i;
+			i->setp(g);
+			if(next) return next->compute_sub(env, i);
+		}
 		return i;
 	}
 
 	virtual typh_instance get(typh_env env, typh_instance e) = 0;
 
 	void setn(ChainableNode* next) { this->next = next; }
+};
+
+struct ConstantNode : public ChainableNode {
+	std::string value;
+	TokenType type;
+
+	ConstantNode(std::string v, TokenType t) : value(v), type(t) {}
+	
+	typh_instance get(typh_env env, typh_instance g) override {
+		switch(type){
+			case TT_Int:	return env->make_int(std::stoi(value));
+			case TT_Number: return env->make_float(std::stof(value));
+			case TT_Keyword:
+				if(value == "True") return env->make_bool(true);
+				else if(value == "False") return env->make_bool(false);
+				break;
+			case TT_String: return env->make_str(value);
+		}
+		return env->make_err("Unknown type constant");
+	}
 };
 
 struct DoGetNode : public ChainableNode {

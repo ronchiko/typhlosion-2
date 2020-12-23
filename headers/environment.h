@@ -66,8 +66,7 @@ public:
 	inline typh_instance make_int(int i) { return allocator.allocate(int_type->mkn(i)); }
 	typh_instance make_err(const char* fmt...);
 	inline typh_instance make_bool(bool b) { return allocator.allocate(b ? bool_type->typh_True : bool_type->typh_False); } 
-	inline typh_instance make_str(std::string& str) { return allocator.allocate(string_type->mkn(str)); }
-
+	typh_instance make_str(std::string str);
 	/* return the upmost parent of this environment */
 	typh_env upmost() const;
 
@@ -79,10 +78,10 @@ public:
 		return allocator.allocate(t);
        	}
 
-	inline typh_instance make_handle(typh_func_c fnc, typh_generic_array ga, int gen) {
-		return allocator.allocate(func_type->mkn(fnc, ga, gen));
-	}	
+	typh_instance make_handle(typh_func_c fnc, typh_generic_array ga, int gen);
 };
 
 typh_env initRootEnvironment();
 void bindDefaults(typh_env);
+
+void query_func_handle(typh_instance&, typh_func_c, typh_generic_array ga, int gen);
