@@ -1,5 +1,5 @@
 {
-  "username": null, 
-  "password": null, 
+  "username": "admin", 
+  "password": "password", 
   "Error": "Deprecated API"
 }
