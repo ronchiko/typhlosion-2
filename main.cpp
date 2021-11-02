@@ -8,7 +8,7 @@
 #include "error.h"
 #include "environment.h"
 #include "function.h"
-#include "strings.h"
+#include "typh_strings.h"
 #include "parser.h"
 
 int main(){	

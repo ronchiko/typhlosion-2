@@ -64,6 +64,7 @@ public:
 	inline typh_instance make(typh_type t, typh_instance_array a) { return allocator.allocate(t->mkn(this, nullptr, a)); }
 	inline typh_instance make_float(float f) { return allocator.allocate(float_type->mkn(f)); }
 	inline typh_instance make_int(int i) { return allocator.allocate(int_type->mkn(i)); }
+	inline typh_instance make_size(size_t i) { return allocator.allocate(int_type->mkn(static_cast<int>(i))); }
 	typh_instance make_err(const char* fmt...);
 	inline typh_instance make_bool(bool b) { return allocator.allocate(b ? bool_type->typh_True : bool_type->typh_False); } 
 	typh_instance make_str(std::string str);

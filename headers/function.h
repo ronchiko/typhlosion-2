@@ -9,8 +9,8 @@
 
 struct FunctionSignature;
 
-struct TyphlosionFunction : public TyphlosionType {
-
+class TyphlosionFunction : public TyphlosionType {
+public:
 	struct FunctionHandle {
 		typh_func_c general_caller;
 

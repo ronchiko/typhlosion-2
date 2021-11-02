@@ -302,7 +302,7 @@ public:
 	}
 
 	inline int size() const { return _size; }
-	inline int put(int i, typh_type t) { array[i] = t; }
+	inline void put(int i, typh_type t) { array[i] = t; }
 };
 
 struct TyphlosionInstanceArray
@@ -322,7 +322,7 @@ private:
 	template<typename T, typename... Types>
 	void vput(int i, T a, Types... b){
 		if(i >= _size) return;
-		array[i] = static_cast<typh_instance>(a);
+		array[i] = reinterpret_cast<typh_instance>(a);
 		vput(i+1, b...);
 	}
 

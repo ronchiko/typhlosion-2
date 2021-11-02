@@ -1,6 +1,6 @@
 
 #include "types.all"
-#include "strings.h"
+#include "typh_strings.h"
 
 #include <sstream>
 
@@ -9,7 +9,7 @@
 typh_string TyphlosionEnv::string_type = nullptr;
 
 typh_instance str_length(typh_env env, typh_instance a, typh_instance_array args, typh_generic_array gargs) {	
-	return env->make_int((GETS(a)).length());
+	return env->make_size((GETS(a)).length());
 }
 
 struct StringMembers {
@@ -53,14 +53,14 @@ TyphFunc_1A(TYPE_CONST::cmp) {
 	if(b->is(this)) {
 		std::string& as = GETS(a), &bs = GETS(b);
 
-		if(as.length() != bs.length()) return env->make_int(as.length() - bs.length());
+		if(as.length() != bs.length()) return env->make_size(as.length() - bs.length());
 		
 		for(int i = 0; i < as.length(); i++) {
 			if(as[i] != bs[i]) return env->make_int(static_cast<int>(as[i] - bs[i]));
 		}
 		return env->make_int(0);
 	}
-	return env->make_int(a - b);
+	return env->make_size(a - b);
 }
 
 TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array args){

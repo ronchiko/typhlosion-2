@@ -201,7 +201,7 @@ struct CallNode : public ChainableNode {
 
 	typh_instance get(typh_env env, typh_instance e) override {	
 		typh_instance_array args = new TyphlosionInstanceArray(arguments.size());
-		typh_generic_array gargs = new TyphlosionTypeArray(generic_arguments.size());
+		typh_generic_array gargs = new TyphlosionTypeArray(static_cast<int>(generic_arguments.size()));
 		
 		for(int i = 0; i < args->size(); i++){
 			typh_instance generated = arguments[i]->compute(env);

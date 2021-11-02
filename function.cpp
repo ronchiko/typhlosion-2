@@ -74,7 +74,7 @@ LDef {
 }
 
 FDef1A(cmp) {
-	return env->make_int(a - b);
+	return env->make_size(a - b);
 }
 
 TyphFunc_CA(TYPE_CONST::mkn, typh_instance_array) { return env->make_err("Lambda functions aren't supported yet"); }

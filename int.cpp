@@ -89,7 +89,7 @@ FDef1A(rsh) { if(b->is(this)) return env->make_int(GETI(a) >> GETI(b)); OpError1
 FDef0A(nt_) { return env->make_int(~GETI(a)); }
 
 FDef1A(cmp) {
-	if(b->is(this)) return env->make_int(GETI(a) - GETF(b));
+	if(b->is(this)) return env->make_int((int)(GETI(a) - GETF(b)));
 	OpError1A(comapre);
 }
 
